@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>冷酷氛围配乐 · 程序化合成试听</title>
+<style>
+  :root{
+    --bg:#080c11; --card:#0e151c; --line:#1d2a35; --ink:#c8d6e0; --dim:#6b8091;
+    --accent:#7fd4c1; --warn:#d98b7a; --ok:#8fd694;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;padding:30px 18px 46px;color:var(--ink);
+    background:radial-gradient(1100px 560px at 50% -12%,#12202b,#080c11 62%);
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:19px;font-weight:600;letter-spacing:.16em;margin:0 0 8px;color:#eaf3f7}
+  .sub{color:var(--dim);font-size:13px;line-height:1.75;margin:0 0 20px}
+  .card{
+    background:linear-gradient(180deg,var(--card),#0a1016);
+    border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;
+  }
+  .card h2{font-size:12px;font-weight:600;letter-spacing:.18em;color:var(--dim);margin:0 0 12px;text-transform:uppercase}
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  button{
+    font:inherit;color:var(--ink);background:#132029;border:1px solid var(--line);
+    border-radius:10px;padding:10px 15px;cursor:pointer;transition:.16s;
+  }
+  button:hover{border-color:#2f5a63;color:#eaf3f7}
+  button:active{transform:translateY(1px)}
+  button.primary{background:#12312c;border-color:#2b6b5e;color:#d8fff5;min-width:126px;font-weight:600}
+  button.primary.on{background:#2b1a1a;border-color:#7a4340;color:#ffdcd6}
+  label.chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);cursor:pointer;user-select:none}
+  input[type=range]{width:132px;accent-color:var(--accent)}
+  input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
+  .chips{display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--line);border-radius:8px;padding:6px 13px;font-size:13px;
+    color:var(--dim);background:#0b1218;transition:.25s;font-variant-numeric:tabular-nums;
+  }
+  .chip.on{border-color:var(--accent);color:#d8fff5;background:#0f2a26;box-shadow:0 0 16px -6px var(--accent)}
+  .meta{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.7}
+  .sfx{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .sfx button{width:100%;padding:13px 10px;font-size:13.5px}
+  canvas{width:100%;height:74px;display:block;border-radius:10px;background:#070b0f;border:1px solid var(--line)}
+  #selftest{font-size:12px;color:var(--dim);margin-top:10px;font-variant-numeric:tabular-nums;line-height:1.7}
+  #selftest.ok{color:var(--ok)} #selftest.bad{color:var(--warn)}
+  #err{display:none;margin-top:10px;font-size:12px;color:#ffb3a3;white-space:pre-wrap}
+  .foot{font-size:11.5px;color:#54687a;line-height:1.8;margin-top:16px}
+  .lede{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:8px}
+  .lede b{color:#9fc7d4;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>冷 酷 · 氛 围 配 乐</h1>
+  <p class="sub">D 小调 · 62 BPM · i – i – VI – V（和声小调，V 级为 A 大调制造张力）<br/>
+  全部由 Web Audio 实时合成：<b>页面里没有一个音频文件</b>。</p>
+
+  <div class="card">
+    <div class="row">
+      <button id="play" class="primary">▶ 播放</button>
+      <label class="chk"><input type="checkbox" id="mMusic" checked/> 音乐</label>
+      <label class="chk"><input type="checkbox" id="mSfx" checked/> 音效</label>
+      <label class="chk">音量 <input type="range" id="vol" min="0" max="100" value="78"/></label>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="meta" id="meta">未播放 · 生成性配乐，每轮和声骨架相同、细节每次不同</div>
+  </div>
+
+  <div class="card">
+    <h2>音效 · 答题反馈</h2>
+    <div class="sfx">
+      <button data-sfx="correct">✓ 答对</button>
+      <button data-sfx="wrong">✕ 答错</button>
+      <button data-sfx="page">▸ 翻页</button>
+      <button data-sfx="clue">◆ 线索入册</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>频谱</h2>
+    <canvas id="viz"></canvas>
+    <div id="selftest">离线自检：运行中…</div>
+    <div id="err"></div>
+  </div>
+
+  <p class="lede">
+    <b>编曲构成</b>：D 踏板低音（锯齿波 + 慢速滤波 LFO）／和声垫（三角+锯齿，2.6 秒渐入、和弦间交叉淡化）／
+    低沉拨弦贝斯（每小节落点）／稀疏五声旋律（高音区、长尾）／冷金属钟（谐波 1 : 2.01 : 2.98 : 4.1，约每 3 小节一次）／
+    心跳低频（每 4 小节一组双击）／极轻带通风声（0.011 Hz 慢起伏）。全部经程序生成脉冲响应的卷积混响。
+  </p>
+
+  <p class="foot">
+    本页音频 100% 由代码实时生成，不含任何外部音乐素材，因此不涉及第三方音乐版权。<br/>
+    杀戮尖塔等商业游戏的 OST 属于 Mega Crit / 作曲者版权作品，不会也不应被打包进游戏发布。
+  </p>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   冷酷氛围配乐引擎 —— 纯 Web Audio 合成，无音频文件
+   ============================================================ */
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+function makeImpulse(ctx, seconds = 3.4, decay = 2.4) {
+  const rate = ctx.sampleRate;
+  const len = Math.max(1, Math.floor(rate * seconds));
+  const buf = ctx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return buf;
+}
+
+function makeNoise(ctx, seconds = 4) {
+  const rate = ctx.sampleRate;
+  const len = Math.max(1, Math.floor(rate * seconds));
+  const buf = ctx.createBuffer(1, len, rate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+/* 和声骨架：两小节一个和弦 —— i i VI V */
+const PROG = [
+  { name: "i",  root: 50, notes: [50, 53, 57, 62] }, // Dm
+  { name: "i",  root: 50, notes: [50, 53, 57, 62] },
+  { name: "VI", root: 46, notes: [46, 50, 53, 58] }, // Bb
+  { name: "V",  root: 45, notes: [45, 49, 52, 57] }  // A（和声小调）
+];
+const MELODY = [62, 65, 67, 69, 72, 74, 77, 79];
+
+class ColdScore {
+  constructor(ctx, out, opts = {}) {
+    this.ctx = ctx;
+    this.bpm = opts.bpm || 62;
+    this.beat = 60 / this.bpm;
+    this.bar = this.beat * 4;
+    this.playing = false;
+    this.sources = [];
+
+    this.bus = ctx.createGain();
+    this.bus.gain.value = 1;
+    this.bus.connect(out);
+
+    this.dry = ctx.createGain();
+    this.dry.gain.value = 0.9;
+    this.dry.connect(this.bus);
+
+    const damp = ctx.createBiquadFilter();
+    damp.type = "lowpass";
+    damp.frequency.value = 2000;
+    this.conv = ctx.createConvolver();
+    this.conv.buffer = makeImpulse(ctx);
+    this.verbSend = ctx.createGain();
+    this.verbSend.gain.value = 0.55;
+    const verbOut = ctx.createGain();
+    verbOut.gain.value = 0.85;
+    this.verbSend.connect(damp).connect(this.conv).connect(verbOut).connect(this.bus);
+  }
+
+  send(node, amount) {
+    const g = this.ctx.createGain();
+    g.gain.value = amount;
+    node.connect(g).connect(this.verbSend);
+  }
+
+  getChord(bar) { return PROG[Math.floor(bar / 2) % PROG.length]; }
+
+  /* ---------- 持续音层 ---------- */
+  startVoices(t0) {
+    const ctx = this.ctx;
+
+    // D 踏板低音
+    const droneGain = this.droneGain = ctx.createGain();
+    droneGain.gain.setValueAtTime(0.0001, t0);
+    droneGain.gain.linearRampToValueAtTime(0.085, t0 + 5);
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 260; lp.Q.value = 4;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.031;
+    const lfoAmt = ctx.createGain(); lfoAmt.gain.value = 110;
+    lfo.connect(lfoAmt).connect(lp.frequency); lfo.start(t0);
+    this.sources.push(lfo);
+    [38, 50].forEach((m, i) => {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = i ? 7 : -8;
+      o.connect(lp); o.start(t0); this.sources.push(o);
+    });
+    lp.connect(droneGain);
+    droneGain.connect(this.dry);
+    this.send(droneGain, 0.3);
+
+    // 极轻的风声
+    const windGain = this.windGain = ctx.createGain();
+    windGain.gain.value = 0.012;
+    const src = ctx.createBufferSource();
+    src.buffer = makeNoise(ctx, 4); src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 700; bp.Q.value = 1.1;
+    const w1 = ctx.createOscillator(); w1.frequency.value = 0.017;
+    const wa1 = ctx.createGain(); wa1.gain.value = 420;
+    w1.connect(wa1).connect(bp.frequency); w1.start(t0);
+    const w2 = ctx.createOscillator(); w2.frequency.value = 0.011;
+    const wa2 = ctx.createGain(); wa2.gain.value = 0.008;
+    w2.connect(wa2).connect(windGain.gain); w2.start(t0);
+    this.sources.push(src, w1, w2);
+    src.connect(bp).connect(windGain);
+    windGain.connect(this.dry);
+    this.send(windGain, 0.5);
+  }
+
+  /* ---------- 和声垫 ---------- */
+  pad(t, notes, dur) {
+    const ctx = this.ctx;
+    notes.forEach((m, i) => {
+      const o = ctx.createOscillator();
+      o.type = i % 2 ? "sawtooth" : "triangle";
+      o.frequency.value = mtof(m);
+      o.detune.value = Math.random() * 16 - 8;
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass"; f.frequency.value = 620 + i * 110; f.Q.value = 0.8;
+      const g = ctx.createGain();
+      const peak = 0.05 / (1 + i * 0.55);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(peak, t + 2.6);
+      g.gain.setValueAtTime(peak, t + dur - 1.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      o.connect(f).connect(g);
+      g.connect(this.dry);
+      this.send(g, 0.6);
+      o.start(t); o.stop(t + dur + 0.1);
+    });
+  }
+
+  /* ---------- 低沉拨弦 ---------- */
+  pizz(t, m, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = "sawtooth"; o.frequency.value = mtof(m);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(1100, t);
+    f.frequency.exponentialRampToValueAtTime(170, t + 0.4);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vel, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+    o.connect(f).connect(g);
+    g.connect(this.dry);
+    this.send(g, 0.45);
+    o.start(t); o.stop(t + 0.7);
+  }
+
+  /* ---------- 稀疏旋律 ---------- */
+  melody(t, m, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = "triangle"; o.frequency.value = mtof(m);
+    const o2 = ctx.createOscillator();
+    o2.type = "sine"; o2.frequency.value = mtof(m) * 2.005;
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vel, t + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+    o.connect(g); o2.connect(g2).connect(g);
+    g.connect(this.dry);
+    this.send(g, 1.0);
+    o.start(t); o.stop(t + 3.4); o2.start(t); o2.stop(t + 3.4);
+  }
+
+  /* ---------- 冷金属钟 ---------- */
+  bell(t, m, vel) {
+    const ctx = this.ctx;
+    [1, 2.01, 2.98, 4.1].forEach((mult, i) => {
+      const o = ctx.createOscillator();
+      o.type = "sine"; o.frequency.value = mtof(m) * mult;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vel / (1 + i * 1.7), t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 4.6 / (1 + i * 0.35));
+      o.connect(g);
+      g.connect(this.dry);
+      this.send(g, 1.1);
+      o.start(t); o.stop(t + 5);
+    });
+  }
+
+  /* ---------- 心跳 ---------- */
+  thump(t, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(mtof(45), t);
+    o.frequency.exponentialRampToValueAtTime(mtof(33), t + 0.28);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vel, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(g); g.connect(this.dry);
+    o.start(t); o.stop(t + 0.6);
+  }
+
+  /* ---------- 逐小节排程 ---------- */
+  scheduleBar(bar, t) {
+    const ch = this.getChord(bar);
+    if (bar % 2 === 0) this.pad(t, ch.notes, 2 * this.bar + 1.6);
+    this.pizz(t, ch.root - 12 >= 26 ? ch.root - 12 : ch.root, 0.15);
+    if (Math.random() < 0.42) this.pizz(t + 2 * this.beat, ch.root, 0.095);
+    if (Math.random() < 0.55) {
+      const when = t + this.beat * Math.floor(Math.random() * 4);
+      this.melody(when, MELODY[Math.floor(Math.random() * MELODY.length)], 0.026);
+    }
+    if (bar % 3 === 2) this.bell(t + this.beat * 2, ch.notes[ch.notes.length - 1] + 12, 0.045);
+    if (bar % 4 === 0) { this.thump(t, 0.13); this.thump(t + 0.42, 0.085); }
+  }
+
+  tick() {
+    const now = this.ctx.currentTime;
+    while (this.nextBarTime < now + 0.4) {
+      this.scheduleBar(this.barIndex, this.nextBarTime);
+      this.barIndex++;
+      this.nextBarTime += this.bar;
+    }
+  }
+
+  start() {
+    const ctx = this.ctx;
+    if (ctx.state === "suspended") ctx.resume();
+    const t0 = ctx.currentTime + 0.08;
+    this.t0 = t0;
+    this.barIndex = 0;
+    this.nextBarTime = t0;
+    this.playing = true;
+    this.sources = [];
+    this.bus.gain.cancelScheduledValues(ctx.currentTime);
+    this.bus.gain.setValueAtTime(Math.max(this.bus.gain.value, 0.0001), ctx.currentTime);
+    this.bus.gain.linearRampToValueAtTime(1, t0 + 1.5);
+    this.startVoices(t0);
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.tick(), 55);
+    this.tick();
+  }
+
+  stop() {
+    const ctx = this.ctx;
+    this.playing = false;
+    clearInterval(this.timer);
+    const t = ctx.currentTime;
+    this.bus.gain.cancelScheduledValues(t);
+    this.bus.gain.setValueAtTime(Math.max(this.bus.gain.value, 0.0001), t);
+    this.bus.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+    [this.droneGain, this.windGain].forEach(g => {
+      if (!g) return;
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), t);
+      g.gain.linearRampToValueAtTime(0.0001, t + 1.1);
+    });
+    this.sources.forEach(s => { try { s.stop(t + 1.3); } catch (e) {} });
+    this.sources = [];
+  }
+}
+
+/* ============================================================
+   音效
+   ============================================================ */
+class Sfx {
+  constructor(ctx, out) {
+    this.ctx = ctx;
+    this.out = out;
+    this.noise = makeNoise(ctx, 2);
+    this.conv = ctx.createConvolver();
+    this.conv.buffer = makeImpulse(ctx, 2.2, 3);
+    this.send = ctx.createGain(); this.send.gain.value = 0.32;
+    this.send.connect(this.conv).connect(out);
+  }
+  env(g, t, vel, attack, dur) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vel, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  tone(t, m, dur, type, vel, rev) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator();
+    o.type = type; o.frequency.value = mtof(m);
+    const g = ctx.createGain();
+    this.env(g, t, vel, 0.012, dur);
+    o.connect(g); g.connect(this.out);
+    const s = ctx.createGain(); s.gain.value = rev; g.connect(s).connect(this.send);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  noiseHit(t, f0, f1, q, vel, dur) {
+    const ctx = this.ctx;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t);
+    f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain();
+    this.env(g, t, vel, 0.006, dur);
+    src.connect(f).connect(g); g.connect(this.out);
+    const s = ctx.createGain(); s.gain.value = 0.4; g.connect(s).connect(this.send);
+    src.start(t); src.stop(t + dur + 0.05);
+  }
+  correct(t) {
+    this.tone(t, 69, 1.1, "triangle", 0.13, 0.55);
+    this.tone(t + 0.10, 76, 1.5, "triangle", 0.12, 0.75);
+    this.tone(t + 0.10, 88, 0.9, "sine", 0.045, 1.0);
+  }
+  wrong(t) {
+    this.tone(t, 50, 0.85, "sawtooth", 0.10, 0.35);
+    this.tone(t + 0.015, 49, 0.9, "sawtooth", 0.09, 0.35);
+    this.noiseHit(t, 900, 220, 1.0, 0.10, 0.30);
+  }
+  page(t) { this.noiseHit(t, 2200, 620, 1.4, 0.10, 0.17); }
+  clue(t) {
+    this.tone(t, 88, 2.6, "sine", 0.085, 1.2);
+    this.tone(t + 0.09, 95, 2.2, "sine", 0.06, 1.2);
+    this.tone(t + 0.09, 100, 1.6, "sine", 0.028, 1.0);
+  }
+}
+
+/* ============================================================
+   页面装配
+   ============================================================ */
+let actx = null, master = null, musicGain = null, sfxGain = null;
+let score = null, sfx = null, analyser = null, freqData = null;
+let lastChordName = "";
+
+const $ = id => document.getElementById(id);
+const playBtn = $("play"), chipsEl = $("chips"), metaEl = $("meta"), viz = $("viz");
+
+PROG.forEach((c, i) => {
+  const d = document.createElement("div");
+  d.className = "chip"; d.textContent = c.name;
+  d.dataset.idx = i;
+  chipsEl.appendChild(d);
+});
+
+function showError(msg) {
+  const el = $("err");
+  el.style.display = "block";
+  el.textContent = String(msg);
+}
+
+window.addEventListener("error", e => showError("运行错误：" + e.message));
+
+function ensureAudio() {
+  if (actx) { if (actx.state === "suspended") actx.resume(); return actx; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  actx = new AC();
+  window.__ctx = actx; // 供自动化测试读取状态
+  master = actx.createGain(); master.gain.value = 0.78;
+  const comp = actx.createDynamicsCompressor();
+  comp.threshold.value = -10; comp.knee.value = 8; comp.ratio.value = 5;
+  comp.attack.value = 0.005; comp.release.value = 0.26;
+  analyser = actx.createAnalyser(); analyser.fftSize = 2048;
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  master.connect(comp).connect(analyser).connect(actx.destination);
+  musicGain = actx.createGain(); musicGain.gain.value = $("mMusic").checked ? 0.9 : 0.0001;
+  musicGain.connect(master);
+  sfxGain = actx.createGain(); sfxGain.gain.value = $("mSfx").checked ? 0.9 : 0.0001;
+  sfxGain.connect(master);
+  score = new ColdScore(actx, musicGain, { bpm: 62 });
+  sfx = new Sfx(actx, sfxGain);
+  return actx;
+}
+
+playBtn.addEventListener("click", () => {
+  ensureAudio();
+  if (score.playing) score.stop(); else score.start();
+  playBtn.textContent = score.playing ? "■ 停止" : "▶ 播放";
+  playBtn.classList.toggle("on", score.playing);
+});
+
+document.querySelectorAll("[data-sfx]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    ensureAudio();
+    const t = actx.currentTime + 0.02;
+    sfx[btn.dataset.sfx](t);
+  });
+});
+
+$("mMusic").addEventListener("change", e => {
+  if (!musicGain) return;
+  const t = actx.currentTime;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.linearRampToValueAtTime(e.target.checked ? 0.9 : 0.0001, t + 0.4);
+});
+$("mSfx").addEventListener("change", e => { if (sfxGain) sfxGain.gain.value = e.target.checked ? 0.9 : 0.0001; });
+$("vol").addEventListener("input", e => { if (master) master.gain.value = e.target.value / 100; });
+
+/* ---------- 频谱 ---------- */
+function drawViz() {
+  const w = viz.clientWidth, h = viz.clientHeight;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (viz.width !== Math.round(w * dpr)) { viz.width = Math.round(w * dpr); viz.height = Math.round(h * dpr); }
+  const g = viz.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  if (!analyser) return;
+  analyser.getByteFrequencyData(freqData);
+  const bars = 64, bw = w / bars, n = freqData.length;
+  for (let i = 0; i < bars; i++) {
+    const idx = Math.floor(Math.pow(i / bars, 1.7) * n * 0.6);
+    const v = freqData[idx] / 255;
+    const bh = Math.max(1, v * h * 0.92);
+    g.fillStyle = "rgba(127,212,193," + (0.16 + v * 0.62).toFixed(3) + ")";
+    g.fillRect(i * bw + 1, h - bh, Math.max(1, bw - 2), bh);
+  }
+}
+
+function uiLoop() {
+  if (score && score.playing && actx) {
+    const el = actx.currentTime - score.t0;
+    if (el >= 0) {
+      const bar = Math.floor(el / score.bar);
+      const chord = PROG[Math.floor(bar / 2) % PROG.length];
+      if (chord.name !== lastChordName) {
+        chipsEl.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.textContent === chord.name && +c.dataset.idx === Math.floor(bar / 2) % PROG.length));
+        lastChordName = chord.name;
+      }
+      metaEl.textContent = "第 " + (bar + 1) + " 小节 · 第 " + (Math.floor(bar / 8) + 1) + " 轮 · 当前和弦 " + chord.name + " · 循环长度 8 小节 / " + (8 * score.bar).toFixed(1) + " 秒";
+    }
+  }
+  drawViz();
+  requestAnimationFrame(uiLoop);
+}
+
+/* ---------- 离线自检：不靠扬声器也能验证合成图确实出声 ---------- */
+async function selfTest() {
+  const el = $("selftest");
+  try {
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const oac = new OAC(2, Math.floor(44100 * 4), 44100);
+    const out = oac.createGain(); out.gain.value = 1; out.connect(oac.destination);
+    const s = new ColdScore(oac, out, { bpm: 62 });
+    s.startVoices(0);
+    for (let b = 0; b < 3; b++) s.scheduleBar(b, b * s.bar);
+    const buf = await oac.startRendering();
+    let peak = 0, sum = 0, n = 0;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; sum += d[i] * d[i]; }
+      n += d.length;
+    }
+    const rms = Math.sqrt(sum / n);
+    const ok = peak > 0.02 && rms > 0.003;
+    el.textContent = "离线自检：" + buf.duration.toFixed(1) + " 秒合成完成 · 峰值 " + peak.toFixed(3) + " · RMS " + rms.toFixed(4) + " · " + (ok ? "通过（合成图有声）" : "异常（几乎无声）");
+    el.className = ok ? "ok" : "bad";
+  } catch (e) {
+    el.textContent = "离线自检失败：" + e.message;
+    el.className = "bad";
+  }
+}
+
+uiLoop();
+selfTest();
+</script>
+</body>
+</html>
