@@ -6,6 +6,12 @@
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+
+/** 计算 git blob 的 SHA-1，用来和远端比对，内容没变就跳过，避免产生无意义的提交 */
+function gitBlobSha(buf) {
+  return createHash("sha1").update("blob " + buf.length + "\0").update(buf).digest("hex");
+}
 
 const [projDir, repoName, vis = "--public"] = process.argv.slice(2);
 if (!projDir || !repoName) { console.error("用法: node publish.mjs <项目目录> <仓库名> [--public|--private]"); process.exit(2); }
@@ -79,13 +85,18 @@ files.sort();
 /* ---------- 4 · 上传 ---------- */
 let first = true;
 const uploaded = [];
+let skipped = 0;
 for (const f of files) {
   const path = relative(projDir, f).split(sep).join("/");
-  const content = readFileSync(f).toString("base64");
+  const buf = readFileSync(f);
+  const content = buf.toString("base64");
+  const localSha = gitBlobSha(buf);
 
   let sha;
   const cur = await api("GET", `/repos/${owner}/${repoName}/contents/${encodeURIComponent(path)}` + (first ? "" : `?ref=${branch}`));
   if (cur.ok && cur.json && cur.json.sha) sha = cur.json.sha;
+
+  if (sha === localSha) { console.log(`  · ${path} 未改动，跳过`); skipped++; first = false; continue; }
 
   const body = { message: `添加 ${path}`, content };
   if (sha) body.sha = sha;
@@ -101,11 +112,11 @@ for (const f of files) {
     console.error(`上传失败 ${path} (${put.status})：${put.json?.message || put.text.slice(0, 200)}`);
     process.exit(1);
   }
-  console.log(`  ✓ ${path}（${(statSync(f).size / 1024).toFixed(1)} KB）`);
+  console.log(`  ✓ ${path}（${(buf.length / 1024).toFixed(1)} KB）`);
   uploaded.push(path);
   first = false;
 }
-console.log(`共上传 ${uploaded.length} 个文件，分支 ${branch}`);
+console.log(`上传 ${uploaded.length} 个文件，跳过 ${skipped} 个未改动文件，分支 ${branch}`);
 
 // .nojekyll 让静态文件原样发布
 const nj = await api("PUT", `/repos/${owner}/${repoName}/contents/.nojekyll`, {
