@@ -119,10 +119,15 @@ for (const f of files) {
 console.log(`上传 ${uploaded.length} 个文件，跳过 ${skipped} 个未改动文件，分支 ${branch}`);
 
 // .nojekyll 让静态文件原样发布
-const nj = await api("PUT", `/repos/${owner}/${repoName}/contents/.nojekyll`, {
-  message: "添加 .nojekyll", content: Buffer.from("").toString("base64"), branch
-});
-console.log(nj.ok ? "  ✓ .nojekyll" : `  ! .nojekyll 失败 (${nj.status})`);
+const njCur = await api("GET", `/repos/${owner}/${repoName}/contents/.nojekyll?ref=${branch}`);
+if (njCur.ok) {
+  console.log("  · .nojekyll 已存在，跳过");
+} else {
+  const nj = await api("PUT", `/repos/${owner}/${repoName}/contents/.nojekyll`, {
+    message: "添加 .nojekyll", content: Buffer.from("").toString("base64"), branch
+  });
+  console.log(nj.ok ? "  ✓ .nojekyll" : `  ! .nojekyll 失败 (${nj.status})`);
+}
 
 /* ---------- 5 · Pages ---------- */
 if (vis === "--public") {
