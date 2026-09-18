@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#080c11"/>
+<title>冷到极处的噪声 · 科学推理短篇</title>
+<style>
+  :root{
+    --bg:#080c11; --card:#0e151c; --card2:#0a1016; --line:#1d2a35; --line2:#24404e;
+    --ink:#c8d6e0; --dim:#6b8091; --acc:#7fd4c1; --warm:#d9a05b; --bad:#d98b7a; --ok:#8fd694;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--ink);background:radial-gradient(1100px 620px at 50% -12%,#12202b,#080c11 60%);
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  }
+  .hidden{display:none !important}
+  button{font:inherit;color:var(--ink);background:#132029;border:1px solid var(--line);border-radius:10px;
+    padding:10px 15px;cursor:pointer;transition:.16s;text-align:left}
+  button:hover:not(:disabled){border-color:#2f5a63;color:#eaf3f7}
+  button:disabled{opacity:.42;cursor:default}
+  button.primary{background:#12312c;border-color:#2b6b5e;color:#d8fff5;font-weight:600}
+  button.ghost{background:transparent}
+  .wrap{max-width:880px;margin:0 auto;padding:22px 16px 40px}
+
+  /* ---------- 顶栏 ---------- */
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .brand{font-size:13px;letter-spacing:.2em;color:var(--dim)}
+  .spacer{flex:1}
+  .tgl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--dim);cursor:pointer;user-select:none}
+  .tgl input{accent-color:var(--acc);width:15px;height:15px}
+  .tgl input[type=range]{width:96px}
+
+  /* ---------- 书架 ---------- */
+  h1{font-size:22px;font-weight:600;letter-spacing:.12em;margin:6px 0 6px;color:#eaf3f7}
+  .lede{color:var(--dim);font-size:13px;line-height:1.85;margin:0 0 22px;max-width:640px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:14px}
+  .chapter{display:block;padding:0;overflow:hidden;background:linear-gradient(180deg,var(--card),var(--card2))}
+  .chapter:hover:not(.locked){border-color:#2f5a63;transform:translateY(-2px)}
+  .chapter .cover{height:118px;background:#070b0f;border-bottom:1px solid var(--line);display:block}
+  .chapter .cover svg{width:100%;height:100%;display:block}
+  .chapter .body{padding:12px 14px 14px;display:block}
+  .chapter .t{display:block;font-size:15px;color:#eaf3f7;font-weight:600;line-height:1.4}
+  .chapter .m{display:block;font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.65}
+  .chapter .s{display:block;font-size:11.5px;color:var(--acc);margin-top:9px}
+  .chapter.locked{opacity:.34;cursor:default}
+  .chapter.locked .t{color:var(--dim)}
+
+  /* ---------- 阅读器 ---------- */
+  .pbar{height:3px;background:#101a22;border-radius:2px;overflow:hidden;margin-bottom:14px}
+  .pbar i{display:block;height:100%;background:linear-gradient(90deg,#2b6b5e,var(--acc));transition:width .3s}
+  .stage{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:stretch}
+  .art{background:#070b0f;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .art svg{width:100%;height:auto;display:block}
+  .panel{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:18px}
+  .ptitle{font-size:16px;color:#eaf3f7;font-weight:600;margin:0 0 10px;line-height:1.5}
+  .ptext{font-size:14.5px;line-height:1.95;color:var(--ink);margin:0}
+  .ptext + .ptext{margin-top:11px}
+  .reveal{margin-top:14px;border-left:2px solid var(--line2);padding:2px 0 2px 13px}
+  .reveal .rlabel{font-size:11px;letter-spacing:.16em;color:var(--dim)}
+  .reveal .rtext{font-size:13.5px;line-height:1.9;margin-top:7px;color:#b6c9d4}
+  .ask{font-size:13px;color:var(--warm);letter-spacing:.06em;margin:0 0 10px}
+  .opts{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+  .opt{display:flex;gap:10px;align-items:flex-start;line-height:1.7;font-size:14px;padding:12px 14px}
+  .opt .k{color:var(--dim);font-weight:600;flex:0 0 auto}
+  .opt.wrong{border-color:#7a4340;color:#e3b0a6;opacity:.75}
+  .opt.right{border-color:#2b6b5e;background:#0f2a26;color:#d8fff5}
+  .opt.chosen{border-color:#5b6f8a;background:#111d28;color:#dbe7ef}
+  .recallbox{margin-top:6px;border:1px solid #2b4756;border-radius:11px;padding:13px 15px;background:#0d151c}
+  .recallbox .rlabel{font-size:11px;letter-spacing:.16em;color:var(--dim)}
+  .recallbox .rtext{font-size:14px;line-height:1.8;margin-top:7px;color:#dbe7ef}
+  .modal{position:fixed;inset:0;background:rgba(3,6,9,.72);z-index:60;display:flex;align-items:center;justify-content:center;padding:22px}
+  .modalbox{background:#0b1218;border:1px solid var(--line);border-radius:14px;padding:18px;width:min(560px,94vw)}
+  .modalbox h3{margin:0 0 12px;font-size:13px;letter-spacing:.18em;color:var(--dim);font-weight:600}
+  .modalbox textarea{width:100%;background:#070b0f;color:#c8d6e0;border:1px solid var(--line);border-radius:10px;
+    padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.75;resize:vertical}
+  .opt:disabled{opacity:.42}
+  .opt.wrong:disabled,.opt.right:disabled{opacity:1}
+  .acts{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .hintbox{margin-top:14px;font-size:13px;line-height:1.85;color:#c9b28a;border-left:2px solid #5c4a2c;padding-left:13px}
+  .feedback{margin-top:14px;border-radius:11px;padding:14px 15px;border:1px solid var(--line);display:none}
+  .feedback.show{display:block;animation:rise .28s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .feedback.good{border-color:#2b6b5e;background:#0d211e}
+  .feedback.bad{border-color:#6d3b38;background:#1d1113}
+  .fb-head{font-size:13px;font-weight:600;letter-spacing:.08em;margin-bottom:8px}
+  .feedback.good .fb-head{color:#9fe8cf} .feedback.bad .fb-head{color:#eda99e}
+  .fb-body{font-size:13.5px;line-height:1.9;margin:0 0 12px;color:#c3d3dc}
+
+  /* ---------- 底栏 ---------- */
+  .status{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--dim)}
+  .meters{display:flex;align-items:center;gap:7px}
+  .meters i{display:block;width:64px;height:4px;background:#16232c;border-radius:2px;overflow:hidden}
+  .meters b{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+  .meters .t b{background:var(--warm)}
+
+  /* ---------- 结算 ---------- */
+  .score{font-size:64px;font-weight:700;color:#eaf3f7;line-height:1;letter-spacing:-.02em}
+  .score small{font-size:15px;color:var(--dim);font-weight:400;margin-left:8px;letter-spacing:.1em}
+  .tier{font-size:14px;color:var(--acc);letter-spacing:.2em;margin:10px 0 22px}
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl td{padding:9px 4px;border-bottom:1px solid var(--line);color:var(--dim)}
+  .tbl td:last-child{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .clues{margin-top:8px}
+  .clue{font-size:13.5px;line-height:1.8;color:#b6c9d4;padding:9px 0;border-bottom:1px solid var(--line)}
+  .clue::before{content:"◆ ";color:var(--acc)}
+
+  /* ---------- 线索本 ---------- */
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(400px,92vw);background:#0b1218;border-left:1px solid var(--line);
+    transform:translateX(102%);transition:transform .28s ease;z-index:40;padding:20px;overflow-y:auto}
+  .drawer.open{transform:none}
+  .drawer h3{font-size:13px;letter-spacing:.18em;color:var(--dim);margin:0 0 14px}
+  .scrim{position:fixed;inset:0;background:rgba(3,6,9,.62);z-index:30;opacity:0;pointer-events:none;transition:.28s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  #toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);background:#12312c;border:1px solid #2b6b5e;
+    color:#d8fff5;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #err{display:none;margin-top:14px;font-size:12px;color:#ffb3a3;white-space:pre-wrap;border:1px solid #6d3b38;
+    background:#1d1113;padding:10px 12px;border-radius:10px}
+  @media (max-width:720px){ .stage{grid-template-columns:1fr} .score{font-size:52px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brand" id="brand">迷雾中的证据</span>
+    <span class="spacer"></span>
+    <label class="tgl"><input type="checkbox" id="mMusic" checked/>音乐</label>
+    <label class="tgl"><input type="checkbox" id="mSfx" checked/>音效</label>
+    <label class="tgl">音量<input type="range" id="vol" min="0" max="100" value="78"/></label>
+    <label class="tgl"><input type="checkbox" id="mSimple"/>简洁阅读</label>
+    <button class="ghost" id="expBtn">导出</button>
+    <button class="ghost" id="nbBtn">线索本 <span id="nbCount">0</span></button>
+  </div>
+
+  <!-- ============ 书架 ============ -->
+  <section id="shelf">
+    <h1>迷雾中的证据</h1>
+    <p class="lede">按真实发现过程写成的中文字科推理短篇。每页只推进一件事；在转折处，根据当时掌握的证据选一个最佳答案。
+      答错可以先看解释再重新作答，看提示会降低本题得分。全部配乐与音效由浏览器实时合成，页面内没有音频文件。</p>
+    <div class="grid" id="shelfGrid"></div>
+  </section>
+
+  <!-- ============ 阅读器 ============ -->
+  <section id="reader" class="hidden">
+    <div class="pbar"><i id="pbar"></i></div>
+    <div class="stage">
+      <div class="art" id="art"></div>
+      <div class="panel">
+        <div id="panelBody"></div>
+      </div>
+    </div>
+    <div class="status">
+      <span id="pageInfo"></span>
+      <span class="spacer"></span>
+      <span class="meters" title="配乐会随线索推进变亮、随连续答错变得压迫">
+        明度<i><b id="mBright"></b></i>
+      </span>
+      <span class="meters t">张力<i><b id="mTens"></b></i></span>
+      <button class="ghost" id="quitBtn" style="padding:5px 11px">返回书架</button>
+    </div>
+    <div id="err"></div>
+  </section>
+
+  <!-- ============ 结算 ============ -->
+  <section id="result" class="hidden">
+    <div class="panel" id="resultBody"></div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <h3>线 索 本</h3>
+  <div id="drawerBody"></div>
+</aside>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   1 · 章节数据
+   ========================================================================== */
+const CHAPTERS = [
+{
+  id: "cmb",
+  title: "冷到极处的噪声",
+  domain: "天体物理 · 精密测量",
+  difficulty: 3,
+  minutes: "20–25",
+  ability: "排除竞争解释",
+  cover: "horn",
+  pages: [
+    {
+      type: "story", art: "horn",
+      title: "1964 年春 · 新泽西州克劳福德山",
+      text: [
+        "贝尔实验室有一台 20 英尺的喇叭形天线，原本用于卫星通信，后来交给射电天文使用。",
+        "阿诺·彭齐亚斯和罗伯特·威尔逊把它对准天空，准备测量银河系外的射电源。动手之前，他们先做一件更基本的功课：把仪器自身的本底噪声测清楚。",
+        "结果他们测到一段多余的噪声——等效天线温度比预期高出大约 3.5 K。"
+      ],
+      reveal: {
+        label: "测量记录",
+        text: "频率 4080 MHz，波长 7.35 厘米。3.5 K 不是「天线有 3.5 度热」，而是把多余的功率折算成一句话：如果这是一个热源发出的，它该有多热。"
+      }
+    },
+    {
+      type: "question", qid: "q1", art: "noise",
+      title: "多出来的 3.5 K",
+      text: ["读数比预期高出一段无法解释的噪声。在把它当成新发现之前，还有一件更基本的功课要做。"],
+      options: [
+        { t: "先宣布：天空中存在一种未知的射电辐射。",
+          why: "宣布之前，没有任何证据表明它来自天空。噪声同样可能来自地面、大气或仪器本身。先命名，等于把最需要检验的假设当成了结论。" },
+        { t: "先假定毛病出在自己这套设备上，逐项检查接收机与天线。", ok: true,
+          why: "这是当时最合理的下一步：任何「来自天空」的解释，都要求先排除仪器、地面、大气这些更近的来源。彭齐亚斯和威尔逊正是从这里开始的。" },
+        { t: "换一个完全不同的频段重测，绕开这个读数。",
+          why: "换频段能得到新信息，但它解释不了已经测到的这段噪声。在原因不明时换掉证据，等于把问题推走。" }
+      ],
+      clue: "第一步永远是先怀疑自己：把「来自天空」留到排除仪器之后。",
+      hint: "想一想：如果噪声来自接收机自身的电子学，或者来自地面与大气，读数会随什么变化？"
+    },
+    {
+      type: "story", art: "rack",
+      title: "把设备拆到不能再拆",
+      text: [
+        "他们检查了接收机的每个接头，重新焊接可疑的焊点，用液氮把前端冷却到更低温度，甚至爬进天线里检查铆钉。",
+        "所有能想到的仪器原因都排除之后，那段噪声还在，而且大小几乎没变。"
+      ],
+      reveal: {
+        label: "当时已经能确认的三件事",
+        text: "噪声与天线的指向无关，与一天中的时间无关，也与季节无关。这三点当时只是「无法解释」，后来却成了整个解释最关键的支点。"
+      }
+    },
+    {
+      type: "question", qid: "q2", art: "sky",
+      title: "如果是干扰，它必须留下痕迹",
+      text: ["有人提出：也许是纽约市的无线电干扰，或者是附近的雷达。要检验「噪声来自某个方向」这个解释，最有力的做法是什么？"],
+      options: [
+        { t: "把天线指向不同方向，比较读数有没有变化。", ok: true,
+          why: "如果噪声来自某个具体的地面源，天线指向改变时，强度必然改变。指向哪里都一样强，方向性干扰就被排除了——这是最直接、最便宜、也最容易重复的检验。" },
+        { t: "请理论家先算一算，这座大城市应该产生多强的干扰。",
+          why: "计算给出的是预期范围，不能替代实测。城市干扰的强度依赖太多未知量，算出来的区间宽到无法判定，既不能证实也不能证伪。" },
+        { t: "把整套设备搬到几百公里外的安静地点，重测一遍。",
+          why: "搬迁代价极大，而且在原地点就能先做的判别性检验（改变指向）还没有做。先做最便宜、最能分清是非的那一个。" }
+      ],
+      clue: "竞争解释必须给出可检验的差别：来源有方向，噪声就该随方向变化。",
+      hint: "问自己：什么样的观测结果，能把这个解释判死？"
+    },
+    {
+      type: "poll", pid: "cmb-poll", art: "noise",
+      title: "先留下你此刻的判断",
+      text: ["按你现在掌握的信息，你觉得这段噪声更可能来自哪里？"],
+      options: [
+        { t: "接收机本身，或者天线附近的地面。" },
+        { t: "大气层里的某种效应。" },
+        { t: "天空本身——一种还没有被认识的辐射。" }
+      ]
+    },
+    {
+      type: "story", art: "pigeon",
+      title: "天线口里住着两只鸽子",
+      text: [
+        "检查过程中他们发现，喇叭口的缝隙里筑了巢，里面有一对鸽子，还有一层被彭齐亚斯在演讲中称为「白色电介质材料」的东西。",
+        "他们清理了天线，把鸽子装进箱子送走，又测了一遍。",
+        "噪声一点没有变。"
+      ],
+      reveal: {
+        label: "这一步的价值",
+        text: "排除一个解释，靠的不是「我觉得不可能」，而是它做出过预测、并且预测失败了。污物若真是来源，清理之后读数必须下降。"
+      }
+    },
+    {
+      type: "question", qid: "q3", art: "noise",
+      title: "为什么「白忙一场」也是进展",
+      text: ["清理鸽子没有改变读数。为什么这仍然是重要的一步？"],
+      options: [
+        { t: "因为它把「污物造成噪声」这个解释真正排除掉了，来源只能在更远的地方。", ok: true,
+          why: "一次失败的预测同样是有用的信息：它缩小了可能性的集合。剩下的解释还必须额外说明——为什么噪声在所有方向、所有季节、清理前后都完全一样。" },
+        { t: "因为这说明天线的卫生无关紧要，以后不必再管。",
+          why: "结论被过度推广了。它排除的只是「这一次的污物是主因」，推不出天线维护不重要。把一次具体结论扩成一般规律，是常见的推理错误。" },
+        { t: "因为这说明整套测量设备坏了，读数不可信。",
+          why: "恰恰相反：设备经过彻底检查后读数依然稳定、可重复，正是这份稳定让后面的解释站得住脚。" }
+      ],
+      clue: "被排除的解释不是白费：每排除一个，剩下的解释就必须解释更多。",
+      hint: "把「清理前后读数不变」当成一次实验的结果来看，它告诉了你什么？"
+    },
+    {
+      type: "story", art: "princeton",
+      title: "一次电话",
+      text: [
+        "1965 年，彭齐亚斯把这段噪声讲给同事伯纳德·伯克听。伯克想起普林斯顿的罗伯特·迪克小组正在准备一个实验：寻找宇宙曾经极热致密所残留的辐射。",
+        "彭齐亚斯给迪克打了电话。迪克听完，把结果转告了自己的小组。"
+      ],
+      reveal: {
+        label: "转述，不是逐字记录",
+        text: "迪克那句常被引用的「我们被抢先了」，来自当事人的事后回忆，不是当时的录音或文字记录。这里保留它，是因为它传神，而不是因为它逐字可靠。"
+      }
+    },
+    {
+      type: "question", qid: "q4", art: "letter",
+      title: "为什么普林斯顿能立刻解释",
+      text: ["迪克小组听到这个数字后，很快给出了物理解释。他们凭什么？"],
+      options: [
+        { t: "他们自己的探测器已经测到了同样强度的噪声。",
+          why: "他们当时还在准备阶段，并没有这份测量结果。先有测量、后有解释，顺序正好相反。" },
+        { t: "他们事先从理论上算过：如果宇宙曾经极热极密，今天就应该剩下一层各向同性的低温辐射。", ok: true,
+          why: "这类预言更早可以追到 1948 年阿尔弗与赫尔曼的估算。观测数字与一个事先存在的预言对上，解释才有分量——这正是「预言在前、测量在后」的价值。" },
+        { t: "他们认识彭齐亚斯，所以更早听到了消息。",
+          why: "消息确实是这样传过去的，但人际渠道不是解释的来源。能解释，靠的是手里已经有的理论框架。" }
+      ],
+      clue: "一个解释的分量，取决于它是否在测量之前就做出了可被检验的预言。",
+      hint: "区别两件事：「事后编一个说法」和「事先算出一个数字」。"
+    },
+    {
+      type: "recall", pid: "cmb-poll", art: "princeton",
+      title: "回看当时的判断",
+      text: ["观测数字与一个事先存在的预言对上了，噪声才从「麻烦」变成「发现」。现在再看你当时的选择。"]
+    },
+    {
+      type: "story", art: "letter",
+      title: "两篇背靠背的论文",
+      text: [
+        "1965 年，《天体物理学杂志》同一期刊出两篇短文：彭齐亚斯与威尔逊报告观测，迪克、皮布尔斯、罗尔与威尔金森给出解释。",
+        "一段找不到来源的噪声，从此有了名字：宇宙微波背景辐射。"
+      ],
+      reveal: {
+        label: "当时报告的数值",
+        text: "论文给出的多余温度约 3.5 K，并带有不确定度。后来的测量把它修正到约 2.7 K。数值改了，结论没有改。"
+      }
+    },
+    {
+      type: "question", qid: "q5", art: "sky",
+      title: "要把它称为「宇宙的余温」，还差什么",
+      text: ["只凭「多出来 3.5 K」，还不足以说它是宇宙的余温。下面哪一项，才是让这个解释真正站得住的条件？"],
+      options: [
+        { t: "这段噪声在所有方向、所有季节都一样强，并且已知的仪器、大气与地面来源都已被逐一排除。", ok: true,
+          why: "各向同性把「来自某个具体物体」这一整类解释排除掉，只剩下来自整个天空、大范围、不受地球自转与公转影响的东西。再加上已知来源逐一排除，才轮到宇宙学解释上场。" },
+        { t: "有一位权威的理论家表示同意。",
+          why: "权威同意可以提高可信度，但它本身不构成证据。解释要靠可检验的性质：方向、季节、频率分布。" },
+        { t: "噪声的数值刚好等于 3 K 这个整数。",
+          why: "数值可以再修正——后来就从 3.5 K 修到 2.7 K。真正不可让步的不是小数点，而是各向同性与来源排除。" }
+      ],
+      clue: "各向同性是最强的线索：它把「某个具体来源」整类排除。",
+      hint: "想一想：如果噪声来自地球上的某个东西，它会随什么变化？"
+    },
+    {
+      type: "story", art: "temp",
+      title: "数值改了，结论没改",
+      text: [
+        "后续测量不断把这段余温的温度往下修正，最终稳定在约 2.7 K；1990 年代的卫星测量把它定到 2.725 K，并发现它有极其微小的各向异性。",
+        "1978 年，诺贝尔物理学奖授予彭齐亚斯与威尔逊，表彰他们发现了宇宙微波背景辐射。"
+      ],
+      reveal: {
+        label: "奖项的边界",
+        text: "那一年物理学奖的另一半授予卡皮察。奖项只追认了观测，没有授予理论解释——这不说明解释不重要，只说明评奖的选择标准与科学分工不是一回事。"
+      }
+    },
+    {
+      type: "story", art: "timeline",
+      title: "回看这条证据链",
+      text: [
+        "1948：理论上算出，如果宇宙曾经极热致密，今天就应该剩下几 K 的辐射。",
+        "1964：一台天线测到一段无法消除的噪声，先怀疑自己，再逐一排除。",
+        "1965：观测与解释同期刊出，噪声有了名字。",
+        "看起来像运气，其实是可以复述的方法。"
+      ]
+    },
+    {
+      type: "story", art: "fireball",
+      title: "这段余温能说什么，不能说什么",
+      text: [
+        "它能说：宇宙曾经处于极热、极密的状态，并且一直在膨胀冷却。",
+        "它不能说：宇宙为什么存在，也不能单独决定宇宙会不会永远膨胀下去——那需要把暗物质、暗能量等其他证据接进来。",
+        "任何一条证据都有它的适用范围。把边界写清楚，本身就是推理的一部分。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Penzias & Wilson, ApJ 142, 419 (1965)　② Dicke, Peebles, Roll & Wilkinson, ApJ 142, 414 (1965)　③ Penzias 1978 年诺贝尔演讲　④ 阿尔弗与赫尔曼 1948 年的估算　⑤ COBE 卫星对 2.725 K 的测定。"
+      }
+    }
+  ]
+},
+{
+  id: "ward",
+  title: "产房里的数字",
+  domain: "医学 · 因果推断",
+  difficulty: 2,
+  minutes: "20–25",
+  ability: "寻找自然对照",
+  cover: "ward",
+  pages: [
+    {
+      type: "story", art: "ward",
+      title: "1846 年 · 维也纳总医院",
+      text: [
+        "医院有两个产科诊室。第一诊室由医生和医学生接生，第二诊室由助产士接生。两边收治的产妇来自同一座城市，条件看上去一样。",
+        "但第一诊室的产妇死于产褥热（产褥感染）的比例，常年是第二诊室的两到三倍。这个差别稳定得无法用偶然解释，医院里每个人都知道。"
+      ],
+      reveal: {
+        label: "当时的流行解释",
+        text: "院方把它归因于「空气不好」「通风不足」「产妇自己羞于启齿」。这些说法听上去都合理，但它们没有回答一个问题：为什么偏偏是第一诊室，而且是常年、稳定地更高。"
+      }
+    },
+    {
+      type: "question", qid: "w1", art: "bars",
+      title: "先问什么",
+      text: ["两个诊室的死亡率差距稳定存在。要弄清原因，第一个问题应该是什么？"],
+      options: [
+        { t: "把两个诊室逐项拆开：它们之间到底有哪些具体的不同？", ok: true,
+          why: "「有差别」还不是解释。要往前走，必须把两个诊室摊平比对——谁在接生、他们之前去过哪里、用过什么工具、走了哪条路线。差别藏在这些具体条目里，而不在「空气」这类笼统说法里。" },
+        { t: "第一诊室的产妇是不是本来身体就更差？",
+          why: "这是一个可能的解释，但它需要证据：如果两边收治标准不同，入院记录里应该看得出来。而当时的记录显示，两个诊室收治的多是同一类产妇。先提出解释、再去找支持它的材料，很容易漏掉反证。" },
+        { t: "干脆关掉第一诊室，让产妇都去第二诊室。",
+          why: "这能降低死亡率，却放弃了弄清原因的机会。在原因未知时合并两个诊室，等于把最有用的证据——两边条件的差异——亲手抹掉。" }
+      ],
+      clue: "「有差别」不是解释；差异必须落到可以逐项比对的条目上。",
+      hint: "把两个诊室当成两次实验：它们在哪一个环节上不一样？"
+    },
+    {
+      type: "story", art: "ward",
+      title: "两组人，两种日程",
+      text: [
+        "把日程摊开，不同就露出来了：第一诊室的医生和医学生，每天上午先到停尸房做尸体解剖，然后直接进产房接生。",
+        "第二诊室的助产士不参加解剖。"
+      ],
+      reveal: {
+        label: "同时存在的其他差别",
+        text: "两个诊室在通风、床位密度、接生姿势上也有差别。所以「解剖」不是唯一的候选解释——它必须自己去争取证据。"
+      }
+    },
+    {
+      type: "question", qid: "w2", art: "hand",
+      title: "一条关键线索",
+      text: ["1847 年，塞麦尔维斯的好友、法医病理学家科莱奇卡在解剖时被学生的手术刀划伤，随后病死。尸检所见的病变，与死于产褥热的产妇几乎相同。"],
+      options: [
+        { t: "它说明尸体上的某种东西能通过伤口进入人体，并造成同样的病变。", ok: true,
+          why: "这句话可以推出预测：如果产妇体内的病变来自尸体上的东西，那么把它送进产道的，就是做过解剖的那双手。假设一旦写成这种形式，就能被检验。" },
+        { t: "它只说明解剖很危险，医生应该保护好自己。",
+          why: "结论收得太窄。医生受伤确实危险，但这解释不了产妇——她们没有参加解剖，却得了同一种病。" },
+        { t: "它说明产褥热是医生之间互相传染的。",
+          why: "方向接近，但表述仍然含糊：它没有指出该改变哪一个具体动作，也就无从检验。" }
+      ],
+      clue: "把线索写成一句能推出预测的话，它才变成可以检验的假设。",
+      hint: "问自己：这个假设若成立，应该预测哪一类人更容易发病？"
+    },
+    {
+      type: "poll", pid: "w-poll", art: "hand",
+      title: "先留下你此刻的判断",
+      text: ["在继续之前，先记下你现在更倾向哪一种解释。没有标准答案，也不必猜中后来发生了什么。"],
+      options: [
+        { t: "更可能是「空气」或环境的问题。" },
+        { t: "更可能是医生自己的手把什么东西带了进去。" },
+        { t: "我说不准，需要更多证据。" }
+      ]
+    },
+    {
+      type: "question", qid: "w3", art: "hand",
+      title: "怎么检验",
+      text: ["1847 年 5 月，塞麦尔维斯要求第一诊室的医生和学生在进产房前，用氯化石灰溶液洗手。"],
+      options: [
+        { t: "在同一段时间里比较第一诊室洗手前后的死亡率，同时盯住第二诊室有没有同步变化。", ok: true,
+          why: "这是最强的做法。第一诊室自身前后对照，排除了「这个诊室本身的固定特点」；同时看第二诊室，能排除「这一年恰好整体变好」这类干扰。两件事合起来，才把改变锁在洗手这个动作上。" },
+        { t: "立刻宣布找到了原因，并写文章推广。",
+          why: "只有一次变化、没有对照就宣布结论，等于跳过检验。后来的历史确实证明他方向对了，但那是结果，不是当时可以省掉对照的理由。" },
+        { t: "让医生改戴手套接生，看死亡率会不会下降。",
+          why: "手套是更晚才有的东西。更要紧的是：同时改变两件事（洗手与手套），就无法判断究竟哪一件起了作用。" }
+      ],
+      clue: "同一个对象的前后对照，加上一个未受干预的参照组，才能把因果锁定到具体动作上。",
+      hint: "想一想：如果只是「这一年医院整体变好了」，你要怎样才能发现？"
+    },
+    {
+      type: "recall", pid: "w-poll", art: "bars",
+      title: "回看当时的判断",
+      text: ["洗手之后，第一诊室的产褥热死亡率在几个月内大幅下降，很快接近第二诊室的水平；而第二诊室并没有同步下降。现在再看你当时的选择。"]
+    },
+    {
+      type: "story", art: "bars",
+      title: "这个对照为什么有分量",
+      text: [
+        "第一诊室下降、第二诊室不变——这两件事必须被同一个解释同时说明。",
+        "「空气变好了」解释不了：第二诊室就在同一栋楼、同样的天气里，它没有下降。只有「做过解剖的手把什么东西带进了产房」，才能同时说明两边。"
+      ],
+      reveal: {
+        label: "一处需要留意的边界",
+        text: "死亡率本身也随年份波动，医院的其他条件也在变。塞麦尔维斯的数据在当时是有力证据，但它不是今天意义上的随机对照试验。"
+      }
+    },
+    {
+      type: "question", qid: "w4", art: "dish",
+      title: "还差什么",
+      text: ["洗手有效，效果明显。但塞麦尔维斯本人把致病物称为「尸体微粒」——他并不知道那是细菌。"],
+      options: [
+        { t: "干预有效不等于机制已经查明；「尸体微粒」只是当时可用的说法，真正站得住的是「某种能被洗掉的东西」。", ok: true,
+          why: "这是科学史上常见的一步：有效的做法可以先于正确的机制出现。承认自己不知道机制，同时坚持「效果是可重复的」，比编一个听起来完整的解释更诚实，也更接近后来的真相。" },
+        { t: "既然机制说错了，那效果大概也是假的。",
+          why: "机制没查明，推不出效果不存在。效果本身可以反复观测，后来的细菌学也证实了它。" },
+        { t: "说明他其实早就知道是细菌，只是不敢说。",
+          why: "这是替历史人物补写内心。没有任何材料支持这种说法；把「他不知道的事」写成「他早知道」，是在扭曲证据。" }
+      ],
+      clue: "干预有效，不等于机制已经查明；这两句话要分开说。",
+      hint: "把「这样做有效」和「为什么有效」拆成两句。"
+    },
+    {
+      type: "question", qid: "w5", art: "ward",
+      title: "为什么同行长期不接受",
+      text: ["塞麦尔维斯的数据相当有说服力，当时的医学界却长期拒绝接受。下面哪一条最能解释这种拒绝？"],
+      options: [
+        { t: "接受它，就等于承认医生自己一直在害死产妇。这个结论在情感和职业身份上都极难承受。", ok: true,
+          why: "他的主张把责任指向了医生本人。当时不少医生宁愿用「产妇羞于启齿」「空气不好」来解释，部分原因正是这些说法不需要他们改变自己的行为。证据的说服力与结论的可接受性，是两件事。" },
+        { t: "因为他的数据是伪造的。",
+          why: "没有材料支持这个说法。他的统计记录保存了下来，后来的细菌学也支持他的方向。" },
+        { t: "因为当时的医生都很愚蠢。",
+          why: "用「愚蠢」解释历史，等于停止追问。真正值得看的是：一个正确的结论需要哪些条件才能被接受——可重复的证据、讲得通的机制，以及愿意改变习惯的人。" }
+      ],
+      clue: "一个结论能不能被接受，不只取决于证据，也取决于它要求谁改变什么。",
+      hint: "想想这个结论如果成立，谁最不舒服。"
+    },
+    {
+      type: "story", art: "hand",
+      title: "他能说什么，不能说什么",
+      text: [
+        "他能说：在第一诊室，进产房前用氯化石灰洗手，能大幅降低产褥热死亡率，而同期的第二诊室没有同步变化。",
+        "他不能说：致病的是「尸体微粒」；也不能说洗手对所有传染病都有效。他不知道细菌，他的解释只是当时最好的近似。",
+        "1865 年，塞麦尔维斯在精神病院去世。他死后二十多年，细菌学才把这件事的最后一块拼上。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Semmelweis《Die Aetiologie, der Begriff und die Prophylaxe des Kindbettfiebers》(1861)　② 维也纳总医院 1841–1849 年产科记录　③ 科莱奇卡 1847 年死亡与尸检情况（由塞麦尔维斯记述）　④ 关于其接受史与晚年境遇的史学研究。具体年份数值各版本略有差异，正文与插图均为示意。"
+      }
+    }
+  ]
+},
+{
+  id: "flask",
+  title: "鹅颈瓶里的空气",
+  domain: "微生物学 · 实验设计",
+  difficulty: 1,
+  minutes: "20–25",
+  ability: "设计对照",
+  cover: "flask",
+  pages: [
+    {
+      type: "story", art: "flask",
+      title: "1859–1864 · 一瓶肉汤里的争论",
+      text: [
+        "煮过的肉汤放上几天就会浑浊、发臭，里面出现大量微小生物。这些生物是从哪里来的？",
+        "一派认为它们从无生命物质中「自发产生」；另一派认为它们来自空气中已经存在的微小胚种。两派都能举出实验，争论了几十年。"
+      ],
+      reveal: {
+        label: "反对者最有力的一句反驳",
+        text: "「你把瓶子封死、把空气隔绝了，里面当然长不出东西——生命需要空气。」这句话不好反驳：只要你的实验里空气进不去，就不能排除是「空气本身」在起作用。"
+      }
+    },
+    {
+      type: "question", qid: "f1", art: "flask",
+      title: "怎么回应这句反驳",
+      text: ["要回应「你把空气隔绝了」这个反驳，最好的实验设计是下面哪一种？"],
+      options: [
+        { t: "让空气自由进出，但在空气进入的路上拦住其中的灰尘和微粒。", ok: true,
+          why: "这一下就把反驳堵死了：空气照进不误，瓶子却是清澈的。两组实验之间的差别只剩下一条——灰尘能不能到达肉汤。变量越少，结论越清楚。" },
+        { t: "把瓶子封得更严，让任何东西都进不来。",
+          why: "封得更严等于把「空气」这个变量推得更远，反对者的那句话依然成立，争论会原地不动。" },
+        { t: "用显微镜直接观察空气里有没有微生物。",
+          why: "这是有用的补充，但它不能定案：显微镜看不见，不等于不存在（也许是太小或太稀）；而且它解释不了另一组实验里肉汤为什么始终清澈。" }
+      ],
+      clue: "要让反驳失效，就把它指出的那条差别补回去——空气照给，只拦灰尘。",
+      hint: "反对者说的差别是「空气」。那就在保留空气的前提下，只改变另一件事。"
+    },
+    {
+      type: "story", art: "flask",
+      title: "一条弯管子",
+      text: [
+        "巴斯德用的瓶子有一根向下再向上弯曲的细颈，像天鹅的脖子。空气可以自由出入，但空气中的灰尘会在弯曲的最低处沉降下来，走不到瓶里。",
+        "这样的瓶子放上几个月，肉汤依然清澈。"
+      ],
+      reveal: {
+        label: "两组之间只差什么",
+        text: "同一锅煮沸的肉汤、同样的瓶子、同样的空气。唯一不同的是灰尘能不能落到液面上。这就是对照实验最要紧的地方：最好只留一个差别。"
+      }
+    },
+    {
+      type: "question", qid: "f2", art: "flask",
+      title: "倾斜一下",
+      text: ["把鹅颈瓶倾斜，让肉汤流到弯曲处、沾上那里的灰尘，再流回瓶底。几天之内，肉汤就腐败了。"],
+      options: [
+        { t: "它指出腐败需要的是灰尘里带着的东西，而不是「空气本身」。", ok: true,
+          why: "空气一直是进得来的，唯一被改变的只是肉汤有没有碰到沉积的灰尘。腐败随之出现，说明起作用的是灰尘，而不是空气。" },
+        { t: "它说明倾斜这个动作破坏了瓶子，所以细菌从裂缝进去了。",
+          why: "瓶子没有破。而且如果是裂缝，那就等于承认「外面的东西进来了」——恰好支持另一方。" },
+        { t: "它说明肉汤本来就不该煮沸。",
+          why: "煮沸恰恰是必要的：它先杀死肉汤里原有的微生物，之后的生长才只能来自外面。去掉煮沸，整个实验就无从解释。" }
+      ],
+      clue: "把「空气」和「空气里的东西」分开，是这一步实验的关键。",
+      hint: "倾斜改变的是哪一样：空气？还是灰尘？"
+    },
+    {
+      type: "poll", pid: "f-poll", art: "dish",
+      title: "先留下你此刻的判断",
+      text: ["按你现在的理解，你更倾向哪一边？"],
+      options: [
+        { t: "肉汤里的微生物是从无生命物质中自己生出来的。" },
+        { t: "它们是从外面进来的，来自空气中的微小胚种。" },
+        { t: "证据还不够，我不想下判断。" }
+      ]
+    },
+    {
+      type: "question", qid: "f3", art: "flask",
+      title: "高处开瓶",
+      text: ["巴斯德带着密封的瓶子爬到汝拉山高处，在那里打开。海拔越高，腐败的瓶子越少。"],
+      options: [
+        { t: "两种解释都能推出这个现象，所以它是支持性证据，但不能单独定案。", ok: true,
+          why: "「高处灰尘更少」和「高处空气的生命力更弱」都能推出「高处腐败更少」。两条路给出同一个预测，就不能靠这一个现象把它们分开。要分开，得去直接检验空气里的微粒——比如在显微镜下数。能同时被你自己的假设和对手的假设解释的证据，分量是有限的。" },
+        { t: "它直接判定了「灰尘」一方胜出，因为高处灰尘少。",
+          why: "这一步跳得太快。它确实是支持灰尘说的证据，但对手能用同一现象给出另一种解释，所以它单独还不足以定案。" },
+        { t: "它说明双方都错了。",
+          why: "它既没有推翻任何一方的核心主张，也没有证明别的什么。它只是两种解释下都成立的一个现象。" }
+      ],
+      clue: "如果一个现象能被双方的假设同时解释，它就不是决定性的证据。",
+      hint: "问自己：对手能不能用同一件事讲出另一个故事？"
+    },
+    {
+      type: "story", art: "letter",
+      title: "1861 年的论文与 1864 年的演讲",
+      text: [
+        "1861 年，巴斯德发表论文，系统陈述空气中的「组织化微粒」；1864 年，他在索邦大学公开演示这些实验。",
+        "法国科学院为此设立的奖项，最终判给了他的这一方。"
+      ]
+    },
+    {
+      type: "question", qid: "f4", art: "dish",
+      title: "对手的实验哪里不对",
+      text: ["普歇一方也做了实验：把干草浸液煮沸，然后封在汞面上隔绝空气，声称里面长出了微生物。为什么这种设计不能作为决定性对照？"],
+      options: [
+        { t: "它同时改变了两件事——空气被隔绝、灰尘也被隔绝，于是无法分辨究竟哪一个妨碍了生长。", ok: true,
+          why: "这正是巴斯德方案的优势：他保留空气、只拦灰尘。一次只动一个变量，结论才指向那个变量。同时动两个，无论结果如何都说不清是哪一边在起作用。" },
+        { t: "因为他们的浸液没有煮沸。",
+          why: "他们煮了。问题不在煮沸，而在对照的构造。" },
+        { t: "因为汞有毒，会杀死微生物。",
+          why: "汞蒸气是否影响结果，是另一个技术问题；即使它没有影响，这个设计仍然分不开「空气」与「灰尘」。" }
+      ],
+      clue: "一次只改变一个变量，是让结论能指向具体原因的前提。",
+      hint: "数一数：这个设计里同时动了几样东西？"
+    },
+    {
+      type: "recall", pid: "f-poll", art: "dish",
+      title: "回看当时的判断",
+      text: ["把鹅颈瓶的细颈打断，让空气和灰尘都能直接落到液面上，肉汤很快腐败；保持细颈完好，同一批肉汤长期清澈。现在再看你当时的选择。"]
+    },
+    {
+      type: "question", qid: "f5", art: "dish",
+      title: "这个实验证明了什么",
+      text: ["巴斯德的鹅颈瓶实验，严格地说证明了下面哪一件事？"],
+      options: [
+        { t: "肉汤里出现的微生物来自空气中已经存在的微生物；它并没有证明微生物能让人生病。", ok: true,
+          why: "「微生物来自微生物」与「微生物导致疾病」是两件事。后者要等到科赫等人用炭疽、结核建立起一套判定标准（分离、培养、接种、再分离）才逐步确立。把前者的结论直接推成后者，是常见的越界。" },
+        { t: "它证明了微生物会让人和动物生病。",
+          why: "实验里没有任何人或动物。这是在结论里加进了实验没有涉及的内容。" },
+        { t: "它证明了生命不会自发产生，因此也证明了生命只能被创造。",
+          why: "前半句接近结论，后半句是一次哲学跳跃。实验能说的是「在这套条件下，没有观察到自发产生」。" }
+      ],
+      clue: "结论的边界，就是实验里真正出现过的东西。",
+      hint: "这个实验里出现过病人吗？"
+    },
+    {
+      type: "story", art: "flask",
+      title: "它能说什么，不能说什么",
+      text: [
+        "它能说：在这套装置下，肉汤里的微生物来自外面带进来的微生物，而不是从无生命物质中自发产生。",
+        "它不能说：所有的腐败、所有的疾病都由微生物引起；也不能说生命在任何条件下都不能自发产生——它说的是「在这套条件下没有被观察到」。",
+        "把「没有被观察到」说成「不可能」，是这段历史里双方都犯过的错。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Pasteur《Mémoire sur les corpuscules organisés qui existent dans l'atmosphère》(1861)　② 巴斯德 1864 年索邦演讲记录　③ 普歇 (F. Pouchet) 1859 年的相关论文　④ 法国科学院 1864 年阿尔博奖评审记录　⑤ 关于该争论的科学技术史研究。实验装置为示意图。"
+      }
+    }
+  ]
+},
+{
+  id: "drift",
+  title: "会漂移的陆地",
+  domain: "地质学 · 证据链",
+  difficulty: 3,
+  minutes: "25–30",
+  ability: "检验竞争解释",
+  cover: "drift",
+  pages: [
+    {
+      type: "story", art: "drift",
+      title: "1912 年 · 一幅世界地图",
+      text: [
+        "南美洲的东岸和非洲的西岸，轮廓看上去能拼在一起。这件事在魏格纳之前就有人注意到，也有人画过拼合图。",
+        "魏格纳做的事不一样：他把海岸线的拼合，与化石、岩层、古气候这几条本来互不相干的线索放在一起看，发现它们指向同一个结论。"
+      ],
+      reveal: {
+        label: "拼图的位置其实没对准",
+        text: "严格地说，真正吻合的是大陆架外缘，而不是今天看到的海岸线——海平面会随冰期升降。魏格纳那代人的拼合图在细节上并不精确，这一点后来被反复指出。"
+      }
+    },
+    {
+      type: "question", qid: "d1", art: "drift",
+      title: "轮廓能拼上，算不算证据",
+      text: ["只凭「两块陆地的轮廓看上去能拼合」，能不能断定它们曾经连在一起？"],
+      options: [
+        { t: "不能。轮廓相似也可能是巧合，或者由别的原因造成；需要其他独立的证据线同时指向这个结论。", ok: true,
+          why: "海岸线是一条很弱的证据：任何一张地图上，只要你愿意挑，总能找到形状相近的两段轮廓。它真正的价值在于——它与化石、岩层、古气候这三条本来无关的线索，指向了同一个答案。" },
+        { t: "能。形状吻合到这种程度，不可能是巧合。",
+          why: "「不可能」说得太满。而且这条论证方式很危险：它靠的是直觉上的不可思议，而不是可以重复的检验。" },
+        { t: "能，只要有人把拼合图画出来。",
+          why: "画图只是把猜想画出来，没有增加任何新信息。同一个人也完全可以画出别的拼法。" }
+      ],
+      clue: "每条证据单独都可能有别的解释；分量来自几条独立的线索指向同一个结论。",
+      hint: "如果只有轮廓这一条，你能想出别的解释吗？"
+    },
+    {
+      type: "story", art: "strata",
+      title: "三条互不相干的线索",
+      text: [
+        "化石：南美、非洲、印度、南极洲和澳大利亚的同一套地层里，都出现了舌羊齿这类植物，以及中龙、水龙兽这类陆生动物。它们既不能飞越大洋，也游不过去。",
+        "岩层：南美的山脉走向，能够接上非洲南端同年代的山脉；北美的阿巴拉契亚山脉，也与格陵兰和北欧的加里东山脉属于同一条带。",
+        "古气候：今天的印度在二叠纪留下了冰川擦痕，而今天冰封的南极洲却埋着煤层。"
+      ],
+      reveal: {
+        label: "为什么化石这条特别有力",
+        text: "中龙是一种淡水爬行动物，水龙兽是陆生动物。它们既不能横渡大洋，也不像鸟类能飞。要在两块相隔数千公里的陆地上留下同一种化石，最简单的解释就是它们曾经生活在同一片陆地上。"
+      }
+    },
+    {
+      type: "question", qid: "d2", art: "strata",
+      title: "化石给出的推断",
+      text: ["相隔数千公里的两块陆地上，发现了同一种淡水爬行动物的化石。最直接的推断是什么？"],
+      options: [
+        { t: "这两块陆地曾经连在一起，或者曾经近到足以让它们走过去。", ok: true,
+          why: "这是解释力最强、额外假设最少的一条。注意它的表述是「曾经相连或很近」，而不是「一定是一块完整的大陆」——推断的强度要与证据匹配。" },
+        { t: "这种动物能横渡大洋。",
+          why: "要求一个与动物习性冲突的能力，代价太大。而且如果它真能渡海，就应该在许多不相连的陆地上都出现，而不是固定出现在这几块能拼合的地块上。" },
+        { t: "化石是被洋流冲过去的。",
+          why: "洋流能把零碎的东西带很远，但要在两岸都留下完整埋藏的骨骼，还要对好几种不同生物反复发生，很难成立。" }
+      ],
+      clue: "在几个解释里选，优先选额外假设最少、并且能顺带解释其余现象的那一个。",
+      hint: "这种动物会不会游泳、会不会飞？"
+    },
+    {
+      type: "poll", pid: "d-poll", art: "drift",
+      title: "先留下你此刻的判断",
+      text: ["假设证据彼此吻合，但你找不到一条说得通的物理机制——你会怎么处理？"],
+      options: [
+        { t: "先把现象记下来，等机制；现象本身是真的，不该因为暂时解释不了就丢掉。" },
+        { t: "机制说不通就不能接受；一个模型必须先过物理这一关。" },
+        { t: "两边都有道理，我会先去看别的证据能不能把它们分开。" }
+      ]
+    },
+    {
+      type: "question", qid: "d3", art: "drift",
+      title: "「陆桥」这个解释",
+      text: ["有人提出：两块大陆之间曾经有陆桥相连，后来沉入海底。要检验这个解释，应该做什么？"],
+      options: [
+        { t: "去查那片海底的地壳性质与地形：如果真有过成片的大陆桥，海底应该留下相应的大陆地壳痕迹。", ok: true,
+          why: "这是把它变成可检验的预测：陆桥要沉没，就得留下可观测的残迹。值得注意的是，1920 年代的海底测量手段还很有限，这个检验当时做不完整——这也是争论拖了几十年的原因之一。" },
+        { t: "因为陆桥听起来太凑巧，直接否认它。",
+          why: "「听起来凑巧」不是证据。要否掉它，得指出它做不出的预测，或者找出它预测错的地方。" },
+        { t: "计算洋流能不能把动植物从一块陆地冲到另一块。",
+          why: "这只检验了多种可能中的一种搬运方式，而且即便算出来「不可能」，也只排除了洋流，排不掉陆桥。" }
+      ],
+      clue: "要把一个说法排除掉，就要求它给出可观测的残迹，然后去看有没有。",
+      hint: "陆桥如果沉了，海底应该留下什么？"
+    },
+    {
+      type: "story", art: "strata",
+      title: "最致命的一击：没有驱动力",
+      text: [
+        "魏格纳设想大陆在洋底上移动，但他给出的驱动力——地球自转产生的离心力与潮汐力——被物理学家算过之后否掉了：量级差得太远，根本推不动。",
+        "于是出现了僵局：现象上说得通，机制上说不通。"
+      ],
+      reveal: {
+        label: "这里的批评是对的",
+        text: "物理学家的这一击站得住。即使现象是真的，一个要求物理上不可能的过程的模型，也很难被接受。承认对手这一步有理，是判断这段历史的关键。"
+      }
+    },
+    {
+      type: "question", qid: "d4", art: "drift",
+      title: "为什么「缺少机制」这么要命",
+      text: ["为什么「他给不出机制」会成为反对的主要理由，而不只是一个待补的细节？"],
+      options: [
+        { t: "因为一个模型要立得住，需要一条物理上说得通的路；如果它要求的力比实际可用的大很多，这个矛盾就必须先解决。", ok: true,
+          why: "科学模型不只是描述现象，还要说明「它怎么做到的」。当所要求的力被算出比可用的力量级高出许多，模型内部就出现了矛盾——这不是可以留到以后再说的细节。" },
+        { t: "因为科学家只相信数学，不相信观察。",
+          why: "恰恰相反，化石、岩层、古气候都是观察。问题不在于信不信观察，而在于这些观察无法被一个自洽的过程串起来。" },
+        { t: "因为他的化石数据后来被证明是错的。",
+          why: "他的化石与地层材料大多经受住了时间。被替换掉的是机制，不是证据。" }
+      ],
+      clue: "模型要同时过两关：现象对得上，过程也走得通。",
+      hint: "一个模型除了「像不像」，还要回答什么？"
+    },
+    {
+      type: "recall", pid: "d-poll", art: "mine",
+      title: "回看当时的判断",
+      text: ["僵局一直持续到 1960 年代。海底测量、古地磁与深海钻探带来了全新的证据，争论才被解开。现在再看你当时的选择。"]
+    },
+    {
+      type: "question", qid: "d5", art: "mine",
+      title: "1960 年代，什么改变了局面",
+      text: ["让大陆漂移在几十年后重新被接受的关键证据是什么？"],
+      options: [
+        { t: "海底的磁异常条带以洋中脊为中心左右对称，记录了地磁场的反复倒转；它既证明了海底在扩张，也给出了移动的过程。", ok: true,
+          why: "这条证据一下子补上了两块短板：它同时证明了「在动」和「怎么动」。随后深海钻探取到的岩芯又独立验证了海底年龄随距离增加——多条新证据互相咬合，机制也就有了。" },
+        { t: "有人拍到了大陆移动的照片。",
+          why: "大陆移动的速度大约是每年几厘米，人的一生也看不出肉眼可见的变化。它只能靠精密测量间接证实。" },
+        { t: "人们发现早先的世界地图画错了。",
+          why: "地图精度确实在提高，但改进的是细节，不足以解释一个跨越大洋的证据体系。" }
+      ],
+      clue: "解开僵局的，往往是能同时给出「在发生」和「怎么发生」的那一类新证据。",
+      hint: "缺的是机制。什么样的证据能顺带把机制也带来？"
+    },
+    {
+      type: "story", art: "drift",
+      title: "他能说什么，不能说什么",
+      text: [
+        "他能说：化石、岩层与古气候的证据指向同一个结论——今天被大洋隔开的陆地，曾经连在一起。",
+        "他不能说：大陆是在洋底上「犁」过去的，也不能说他提出的那两种力是驱动力。现代的板块构造讲的是岩石圈板块整体运动，驱动力来自地幔对流、洋中脊的推力与俯冲板片的拉力。",
+        "他收集的许多现象是对的，他给出的机制是错的。这两件事可以同时成立。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Wegener《Die Entstehung der Kontinente und Ozeane》(1915 初版)　② Wegener 1912 年的演讲与论文　③ Hess (1962) 海底扩张；Vine & Matthews (1963) 海底磁异常条带　④ 深海钻探计划 (DSDP, 1968 起) 的海底年龄结果　⑤ 关于该争论接受的科学史研究。地图与化石为示意，未按真实比例。"
+      }
+    }
+  ]
+},
+{
+  id: "ulcer",
+  title: "胃里的细菌",
+  domain: "医学 · 挑战共识",
+  difficulty: 3,
+  minutes: "20–25",
+  ability: "让证据指向机制",
+  cover: "stomach",
+  pages: [
+    {
+      type: "story", art: "stomach",
+      title: "1982 年 · 珀斯",
+      text: [
+        "当时的教科书上说：胃是一个近乎无菌的器官，胃酸会把随食物进来的微生物杀死。",
+        "消化性溃疡被归因于压力、辛辣食物和胃酸过多。治疗办法是抑制胃酸，但停药之后，溃疡往往还会复发。"
+      ],
+      reveal: {
+        label: "为什么大家不信胃里有细菌",
+        text: "1954 年有一项研究检查了上千份胃部活检，没有找到螺旋菌，作者据此认为胃里没有常驻细菌。此后几十年里，偶尔有人报告看到细菌，通常被当作取样或染色过程中的污染。"
+      }
+    },
+    {
+      type: "question", qid: "h1", art: "scopes",
+      title: "「没有找到」意味着什么",
+      text: ["1954 年那项研究检查了上千份活检，没有找到细菌，于是宣布胃里是无菌的。这个推论的问题在哪里？"],
+      options: [
+        { t: "「没有找到」不等于「不存在」：在采信这个结论之前，要先看它用的染色方法和取样位置，有没有可能本来就看不见、或者取不到。", ok: true,
+          why: "这是所有「未检出」结论都要过的关。样本量上千并不小，问题不在数量，而在方法的分辨力——用错了染色，或者只取了某些部位，细菌完全可能在视野之外。" },
+        { t: "样本量太小，上千份不算什么。",
+          why: "上千份在当时的病理研究里已经相当充分。把问题归到数量上，会让人错过真正的漏洞：方法能不能看见。" },
+        { t: "因为只要有一例反例，结论就作废。",
+          why: "一例反例确实值得追查，但它也可能只是污染。真正要问的是：这一例能不能被独立重复，以及原方法有没有系统性的盲区。" }
+      ],
+      clue: "「没找到」的强度，取决于你用什么方法找、在哪里找。",
+      hint: "换一种染色方法，会不会看见不一样的东西？"
+    },
+    {
+      type: "story", art: "scopes",
+      title: "切片上的螺旋",
+      text: [
+        "病理学家罗宾·沃伦在胃部活检切片上，反复看到一种螺旋形的细菌。它们几乎总出现在炎症区域附近，而不是随机散布在整个胃黏膜上。",
+        "他把这件事告诉了正在做消化科培训的巴里·马歇尔。两人开始一起追。"
+      ],
+      reveal: {
+        label: "为什么「位置对应」这条线索更硬",
+        text: "「看到了细菌」只说明有细菌；「细菌与炎症总在同一处」则把两者绑成了一个必须解释的关联：为什么偏偏总是在那一片？"
+      }
+    },
+    {
+      type: "question", qid: "h2", art: "stomach",
+      title: "关联本身能说明什么",
+      text: ["细菌与炎症出现在同一处。这条观察能直接得出什么结论？"],
+      options: [
+        { t: "它构成了一个必须解释的关联，但还定不了方向——既可能是细菌引起炎症，也可能是炎症部位恰好适合细菌生长。", ok: true,
+          why: "这就是关联与因果之间的距离。空间上的对应把问题聚焦了，但两个方向都说得通，必须再找能区分它们的证据。能把两个方向都摆出来，才算真正读懂了这条线索。" },
+        { t: "它证明了细菌引起胃炎。",
+          why: "方向说得太快。炎症组织本来就可能更适合某些细菌存活，这个反向解释同样能说明现象。" },
+        { t: "它证明了胃炎引起细菌聚集。",
+          why: "这是上一个选项的反向版本，同样只是一个可能。仅凭位置对应，无法在两个方向之间做选择。" }
+      ],
+      clue: "关联把问题聚焦，但不指定方向；要定方向，得靠干预。",
+      hint: "把因果箭头反过来画一次，还说得通吗？"
+    },
+    {
+      type: "poll", pid: "h-poll", art: "scopes",
+      title: "先留下你此刻的判断",
+      text: ["如果你在 1982 年看到这张切片，你的第一反应更接近哪一边？"],
+      options: [
+        { t: "大概是样本污染，胃里本来就不该有细菌。" },
+        { t: "教科书可能是错的，这里确实有常驻细菌。" },
+        { t: "先放下判断，看能不能把它培养出来。" }
+      ]
+    },
+    {
+      type: "question", qid: "h3", art: "dish",
+      title: "怎么把方向定下来",
+      text: ["要检验「这种细菌导致胃炎」，最有说服力的做法是哪一种？"],
+      options: [
+        { t: "把细菌清除掉，看炎症是否随之消退。", ok: true,
+          why: "这是能定方向的检验：如果去掉原因，结果也跟着消失，反向解释（炎症引来细菌）就站不住了。后来抗生素治疗让溃疡长期不再复发，正是这一类证据。" },
+        { t: "统计胃炎病人里有多少人携带这种细菌。",
+          why: "这是相关性观察。它能加强怀疑，但病人和健康人都可能携带，光靠比例分不出方向。" },
+        { t: "在显微镜下更仔细地观察，把形态描述得更精确。",
+          why: "改进观察是有价值的，但它提高的是「看得更清楚」，不会自动变成「谁导致谁」。" }
+      ],
+      clue: "区分因果方向最有效的办法：移除原因，看结果是否消失。",
+      hint: "如果炎症引来细菌，那么杀掉细菌之后炎症应该怎样？"
+    },
+    {
+      type: "story", art: "dish",
+      title: "一次假期带来的转机",
+      text: [
+        "培养这种细菌一开始并不顺利：按常规培养两天，培养皿上什么也没有。",
+        "据马歇尔回忆，1982 年复活节假期，实验室的培养皿在恒温箱里多放了几天。假期结束回来，皿上终于长出了菌落——这种细菌长得比常见的细菌慢得多。",
+        "方法上的一点点改动，让研究对象第一次变得可以反复培养。"
+      ],
+      reveal: {
+        label: "为什么「能培养」很关键",
+        text: "能把它养出来，才谈得上定量、重复和做干预实验。在此之前，所有争论都只能围绕切片上的形态打转。"
+      }
+    },
+    {
+      type: "question", qid: "h4", art: "stomach",
+      title: "他自己喝了下去",
+      text: ["1984 年，马歇尔喝下一份培养液。几天后他出现胃炎症状，胃镜证实了炎症；随后他用抗生素治好了自己。这件事在证据链上的价值与局限分别是什么？"],
+      options: [
+        { t: "价值：在人体上建立了先后顺序——先有菌，后有炎症。局限：只有一个案例，而且他知道自己在做什么，替代不了多人对照。", ok: true,
+          why: "它补上的是因果链里「时间顺序」这一环：原因在前，结果在后，而且这个顺序是他自己安排的。但单一案例无法排除偶然，也无法排除「他知道自己在实验」带来的偏差，所以它是重要的一环，不是最后一环。" },
+        { t: "它一次就证实了因果，因为时间顺序很清楚。",
+          why: "时间顺序是必要条件，不是充分条件。世界上有太多「先发生却没造成」的事。" },
+        { t: "它没有价值，自我实验不算科学。",
+          why: "自我实验的证据强度确实有限，但「有限」不等于「没有」。它在这里恰好补上了别的实验补不上的一环。" }
+      ],
+      clue: "单一案例能建立时间顺序，但建立不了普遍性；两者要分开评估。",
+      hint: "一件事的价值和它的局限，可以同时成立。"
+    },
+    {
+      type: "recall", pid: "h-poll", art: "dish",
+      title: "回看当时的判断",
+      text: ["后面发生的事情：抗生素治疗让许多溃疡病人长期不再复发，微生物学上这种细菌被正式命名并可以在实验室稳定培养。现在再看你当时的选择。"]
+    },
+    {
+      type: "story", art: "scopes",
+      title: "共识是怎么改的",
+      text: [
+        "1994 年，美国国立卫生研究院召开共识会议，确认这种细菌是消化性溃疡的重要病因。",
+        "2005 年，诺贝尔生理学或医学奖授予马歇尔与沃伦。治疗思路也随之改变：从单纯抑制胃酸，转为清除细菌。"
+      ],
+      reveal: {
+        label: "别忘了这些人的名字之外的东西",
+        text: "推动共识改变的，不只是一个人的坚持：还有改进的染色与培养方法、可以重复的抗生素干预结果，以及最后把机制讲清楚的一系列工作。"
+      }
+    },
+    {
+      type: "question", qid: "h5", art: "scopes",
+      title: "更一般的启示",
+      text: ["从「胃是无菌的」到「细菌是溃疡的重要病因」，这个过程最能说明什么？"],
+      options: [
+        { t: "共识的修正，靠的是方法改进、可重复的干预结果与机制解释一起推动，而不是靠谁喊得响。", ok: true,
+          why: "如果只靠一个人的主张，这件事会一直停在争论里。真正让它翻盘的是三样东西同时到位：能反复培养出对象、能通过干预让结果消失、能把机制说通。常识也会错——但纠正常识需要一套完整的证据，而不是一句更响的口号。" },
+        { t: "这说明教科书上的东西基本都是错的。",
+          why: "从一个被修正的结论推出「教科书普遍错误」，是典型的以偏概全。绝大多数教科书内容经受住了检验，这一条之所以被改写，是因为新证据足够硬。" },
+        { t: "这说明只有自我实验才能推动科学。",
+          why: "自我实验在这里只是补上了一个环节，而且它之所以有效，是因为前后还有一整套别的证据。" }
+      ],
+      clue: "纠正共识靠的是一整套证据，不是一句更响的口号。",
+      hint: "这件事里，除了「坚持」，还有哪些东西同时到位了？"
+    },
+    {
+      type: "story", art: "stomach",
+      title: "它能说什么，不能说什么",
+      text: [
+        "它能说：这种细菌是消化性溃疡的重要病因；清除它，能让许多病人的溃疡长期不再复发。",
+        "它不能说：所有溃疡都是它造成的。长期服用某些止痛药同样可以造成溃疡；而携带这种细菌的人里，也有一部分终生不会得溃疡。",
+        "「重要病因」和「唯一病因」是两回事。把前者写成后者，是这段历史里最常见的误读。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Warren & Marshall, Lancet 1983（通讯）　② Marshall 等人的自我实验报告, Med J Aust 1985　③ Palmer, Gastroenterology 1954（「胃内无菌」的来源之一）　④ 美国国立卫生研究院 1994 年共识会议　⑤ 2005 年诺贝尔生理学或医学奖公告。培养与假期细节依据马歇尔本人的回忆叙述。"
+      }
+    }
+  ]
+},
+{
+  id: "neutrino",
+  title: "少了一半的太阳",
+  domain: "粒子物理 · 长期异常",
+  difficulty: 4,
+  minutes: "25–30",
+  ability: "面对长期异常",
+  cover: "mine",
+  pages: [
+    {
+      type: "story", art: "mine",
+      title: "1960 年代 · 南达科他州的一个金矿",
+      text: [
+        "物理学家雷蒙德·戴维斯把一个大罐子放进废弃的金矿深处，里面装着 615 吨清洗液。他想捕捉的是太阳内部核反应产生的中微子。",
+        "每秒有海量中微子穿过这个罐子，但绝大多数什么都不会发生。只有极少数会与液体里的氯原子发生反应，把它变成一个氩原子。"
+      ],
+      reveal: {
+        label: "为什么非要放到地下",
+        text: "地表的宇宙射线会造成大量干扰。厚厚的岩层能挡掉绝大部分其他粒子，而中微子几乎不与物质作用，照样穿得进来。把探测器埋在深处，等于只给中微子留了门。"
+      }
+    },
+    {
+      type: "question", qid: "n1", art: "sun",
+      title: "只有预期的三分之一",
+      text: ["戴维斯的装置运行了几年，得到的结果稳定得让人不安：捕捉到的中微子数量，大约只有理论预期的三分之一。第一步应该做什么？"],
+      options: [
+        { t: "分别去查两件事：探测器这一侧有没有系统性问题，理论计算这一侧有没有出错的地方。", ok: true,
+          why: "在没有弄清任何一边之前，最不该做的就是选边站。中微子实验的难度极高——要从几百吨液体里提取出几十个原子来计数；而太阳模型同样依赖大量输入参数。两边都必须先被逼问一遍。" },
+        { t: "立刻宣布太阳模型错了，物理要改写。",
+          why: "这是把「反常」当成了「发现」。反常只是说明有东西不对，还没说明是哪一边不对。" },
+        { t: "调整理论，让预期降到实测的水平。",
+          why: "为了让数据吻合而回头改理论，等于把检验拆掉了。理论可以改，但必须是被别的独立证据推动的，不能是被数据逼着凑出来的。" }
+      ],
+      clue: "面对反常，先分别审问理论和实验两侧，不要急着选边。",
+      hint: "现在有两条可能的错处，你手上有几件事要查？"
+    },
+    {
+      type: "story", art: "sun",
+      title: "捕捉一个原子的难度",
+      text: [
+        "反应产物是氩-37，半衰期只有 35 天：它会不断消失。科学家必须定期把氩从 615 吨液体里吹出来、收集起来、数清楚有多少个原子。",
+        "这种量级意味着，几天才能攒出几十个原子。整套装置的每一步都可能出错，而结果又必须比「大致差不多」精确得多。"
+      ],
+      reveal: {
+        label: "当时给出的数字",
+        text: "理论预期约 7.6 SNU，实测约 2.56 SNU（SNU 是这类捕获率的专用单位）。差异接近三倍，而且随着数据积累，实测值稳定地停在这个位置。"
+      }
+    },
+    {
+      type: "question", qid: "n2", art: "mine",
+      title: "两种解释都要当真",
+      text: ["「理论算错了」和「探测器出了问题」，为什么两种解释都必须认真对待？"],
+      options: [
+        { t: "因为它们都能说明同一个现象，所以必须找出能把它们区分开的检验。", ok: true,
+          why: "这正是竞争解释的标准处境：两个说法都与现有观测相容。这时最有用的问题不是「哪个更像」，而是「做什么才能让其中一个说不通」。" },
+        { t: "因为理论家一向不可靠。",
+          why: "这是对人的印象，不是对证据的判断。太阳模型在别的方面（日震、光度、太阳风）有大量成功，不能凭一句话打折。" },
+        { t: "因为所有实验都有误差，所以实验一定是错的。",
+          why: "「有误差」不等于「误差大到能解释三倍差距」。这类泛泛的说法既不能证实也不能证伪。" }
+      ],
+      clue: "两个解释都能说得通时，去找能让其中一个说不通的检验。",
+      hint: "哪个观测结果出现，会让其中一方彻底站不住？"
+    },
+    {
+      type: "poll", pid: "n-poll", art: "sun",
+      title: "先留下你此刻的判断",
+      text: ["按你现在的理解，这三倍的差距更可能出在哪一边？"],
+      options: [
+        { t: "太阳模型算错了，太阳内部比想象的冷。" },
+        { t: "探测器有系统性问题，实际捕获得比应该的少。" },
+        { t: "两边都没错，物理本身还有没被发现的东西。" }
+      ]
+    },
+    {
+      type: "question", qid: "n3", art: "mine",
+      title: "稳定地差了三十年",
+      text: ["测量持续了将近三十年，实测值始终稳定在预期的三分之一左右。这种长期稳定的偏差说明了什么？"],
+      options: [
+        { t: "它不太可能是随机误差，而是一个系统性的事实：要么某一侧存在系统性偏差，要么两侧之间真的存在差别。", ok: true,
+          why: "随机误差会让数字上下乱跳，不会稳稳停在一个比例上。稳定意味着成因是系统性的，也意味着这个现象足够真实，值得花几十年去追。" },
+        { t: "说明探测器坏掉了。",
+          why: "仪器坏掉通常会漂移、跳动或干脆无信号，很少恰好稳定在三分之一上，而且还持续几十年。" },
+        { t: "说明太阳正在变小，所以中微子变少了。",
+          why: "太阳确实在缓慢演化，但那是数十亿年的尺度，解释不了几年之内就稳定出现的固定比例差。" }
+      ],
+      clue: "随机误差让结果跳动；系统性偏差让结果稳定地停在一个位置上。",
+      hint: "坏掉的仪器，会给出一个稳定的比例吗？"
+    },
+    {
+      type: "story", art: "mine",
+      title: "另一个国家，另一种原理",
+      text: [
+        "在日本的神冈，另一组人用完全不同的方法测量太阳中微子：一个巨大的水箱，靠中微子与电子碰撞时发出的微弱闪光来计数。",
+        "他们同样看到了短缺。"
+      ],
+      reveal: {
+        label: "为什么这一步很要紧",
+        text: "用两种原理完全不同的装置得到同一个结论，「某一台仪器坏了」这个解释就变得非常难以维持。独立的测量方法，是排除系统性错误最有效的武器。"
+      }
+    },
+    {
+      type: "question", qid: "n4", art: "sun",
+      title: "两台装置都看到了短缺",
+      text: ["两种原理完全不同的探测器都观察到中微子短缺。这一步主要排除了什么？"],
+      options: [
+        { t: "它大大削弱了「某一种探测方法存在系统性问题」这一类解释。", ok: true,
+          why: "化学提取法和水切伦科夫法的误差来源几乎没有重叠，很难想象同一个错误恰好同时影响两者、还影响出同一个结果。这一步把「仪器问题」从首要嫌疑降到了次要位置。" },
+        { t: "它证明了存在新物理。",
+          why: "它把嫌疑推向了「还有没被理解的东西」，但具体是什么，还需要能指出方向的证据。" },
+        { t: "它证明太阳模型是对的。",
+          why: "它支持「预期不是凭空来的」，但并没有检查模型的每一条假设。而且后来的结局是：模型的预期基本站住了，改的是对中微子的理解。" }
+      ],
+      clue: "用互不相干的测量方法得到同一结论，是排除系统性错误最有效的手段。",
+      hint: "两个装置的误差来源，会不会恰好一样？"
+    },
+    {
+      type: "recall", pid: "n-poll", art: "sun",
+      title: "回看当时的判断",
+      text: ["答案在 2001 年前后揭晓，而且不在你当时可能想到的那两个选项里。现在再看你当时的选择。"]
+    },
+    {
+      type: "question", qid: "n5", art: "sun",
+      title: "缺的那部分去哪了",
+      text: ["后来的结论是：中微子能在三种「味」之间转换，而戴维斯的探测器只对其中一种味敏感。这个解释为什么能同时救下理论与实验？"],
+      options: [
+        { t: "因为把三种味加在一起，总数与理论相符；缺的那部分并没有消失，只是换了一种身份，而旧探测器看不见它。", ok: true,
+          why: "这个解释的好处在于：它既不需要推翻太阳模型，也不需要宣布探测器造假。它指出两者的测量对象本来就不是同一个东西——一边数的是全部，一边只数了三分之一。" },
+        { t: "因为理论被修正之后，预期值正好降到了三分之一。",
+          why: "如果只是改预期值来迁就数据，那当年就可以做，用不着等三十年，也解释不了另一台原理不同的装置为何给出同样结果。" },
+        { t: "因为探测器修好之后，测量值上升到了预期水平。",
+          why: "探测器没有坏。后来改变的是「我们在测什么」这个理解，而不是装置的精度。" }
+      ],
+      clue: "同时救下双方的，往往是发现「两边测的其实不是同一个东西」。",
+      hint: "总数对得上、只有一部分对不上，说明什么？"
+    },
+    {
+      type: "story", art: "mine",
+      title: "2001 年 · 用重水同时数两种",
+      text: [
+        "加拿大萨德伯里中微子观测站用重水做探测介质。它的巧妙之处在于：同一个装置里能发生两种不同的反应——一种只对电子中微子敏感，另一种对三种味都敏感。",
+        "结果是：电子中微子确实只有总数的约三分之一，而总数与理论预期相符。"
+      ],
+      reveal: {
+        label: "顺带得到的结论",
+        text: "中微子能变味，意味着它必须有质量。这是对既有粒子物理框架的一次实质性扩展——一个天文观测上的「数字对不上」，最后改写了粒子物理。"
+      }
+    },
+    {
+      type: "story", art: "sun",
+      title: "它能说什么，不能说什么",
+      text: [
+        "它能说：太阳模型关于中微子总数的预期基本成立；中微子确实会在传播中改变味道，因此具有质量。",
+        "它不能说：太阳模型完全正确、不需要任何修正——它只是在这一项上经受住了检验。也不能说实验一开始就没错：恰恰是因为两边都被反复审问过，最后的结论才有分量。",
+        "2002 年，诺贝尔物理学奖授予戴维斯与小柴昌俊；2015 年，又授予麦克唐纳与梶田隆章。"
+      ],
+      reveal: {
+        label: "来源",
+        text: "① Davis, Harmer & Hoffman (1968) 及此后 Homestake 系列论文　② Bahcall 等人的太阳中微子理论计算　③ 神冈 (Kamiokande) 的独立观测　④ SNO 合作组 2001–2002 年的重水结果　⑤ 2002 年与 2015 年诺贝尔物理学奖公告。数值为当时公开报告值，后续测量有所修正。"
+      }
+    }
+  ]
+}
+];
+
+/* ============================================================================
+   2 · SVG 插图库（全部代码绘制，无图片文件）
+   ========================================================================== */
+const C = { bg:"#070b0f", line:"#24404e", ink:"#9fc7d4", dim:"#5b7686", acc:"#7fd4c1", warm:"#d9a05b", red:"#d98b7a" };
+const svgWrap = inner => '<svg viewBox="0 0 640 360" preserveAspectRatio="xMidYMid meet">' + inner + "</svg>";
+const L = (x1,y1,x2,y2,c,w,extra) => '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(c||C.line)+'" stroke-width="'+(w||1)+'" '+(extra||"")+"/>";
+function grid(){ let s=""; for(let x=40;x<640;x+=60) s+=L(x,0,x,360,C.line,.5,'opacity="0.22"'); for(let y=30;y<360;y+=60) s+=L(0,y,640,y,C.line,.5,'opacity="0.22"'); return s; }
+function stars(){ return [[70,58],[122,104],[520,66],[566,138],[432,44],[196,38],[604,232],[82,252],[152,304],[486,300],[612,48],[356,26]]
+  .map((p,i)=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i%3===0?1.7:1)+'" fill="'+C.ink+'" opacity="'+(0.22+(i%4)*0.15).toFixed(2)+'"/>').join(""); }
+const T = (x,y,t,o) => { o=o||{}; return '<text x="'+x+'" y="'+y+'" fill="'+(o.fill||C.dim)+'" font-size="'+(o.size||13)+'" font-family="system-ui,sans-serif" text-anchor="'+(o.anchor||"start")+'" letter-spacing="'+(o.ls||0)+'">'+t+"</text>"; };
+const R = (x,y,w,h,o) => { o=o||{}; return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(o.rx||0)+'" fill="'+(o.fill||"none")+'" stroke="'+(o.stroke||C.line)+'" stroke-width="'+(o.sw||1.2)+'" '+(o.extra||"")+"/>"; };
+const CI = (cx,cy,r,o) => { o=o||{}; return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+(o.fill||"none")+'" stroke="'+(o.stroke||C.line)+'" stroke-width="'+(o.sw||1.2)+'" '+(o.extra||"")+"/>"; };
+
+const ART = {
+  horn: () => grid() + stars()
+    + '<ellipse cx="320" cy="126" rx="122" ry="68" fill="none" stroke="'+C.line+'" stroke-width="1.6"/>'
+    + '<ellipse cx="320" cy="126" rx="88" ry="47" fill="#0c1820" stroke="'+C.acc+'" stroke-width="1.2" opacity=".85"/>'
+    + '<path d="M232 158 L288 258 L352 258 L408 158" fill="none" stroke="'+C.line+'" stroke-width="1.5"/>'
+    + R(300,258,40,54) + L(244,312,396,312,C.line,1.5)
+    + L(288,258,244,312,C.line,1) + L(352,258,396,312,C.line,1)
+    + T(320,336,"克劳福德山 · 20 英尺喇叭天线",{anchor:"middle",ls:1})
+    + T(320,84,"4080 MHz",{anchor:"middle",fill:C.acc,size:12,ls:2}),
+  noise: () => grid()
+    + L(80,90,80,290,C.line,1.3) + L(80,290,580,290,C.line,1.3)
+    + L(80,150,580,150,C.warm,1,'stroke-dasharray="5 6" opacity="0.65"')
+    + '<path d="M80 214 L112 206 L146 220 L180 208 L214 219 L248 205 L282 217 L316 207 L350 218 L384 204 L418 216 L452 206 L486 218 L520 207 L554 215 L580 209" fill="none" stroke="'+C.acc+'" stroke-width="1.6"/>'
+    + T(586,154,"预期",{fill:C.warm,size:12,anchor:"end"})
+    + T(586,214,"实测",{fill:C.acc,size:12,anchor:"end"})
+    + T(92,120,"等效天线温度",{size:12})
+    + '<path d="M508 150 L508 210" stroke="'+C.ink+'" stroke-width="1" opacity="0.5"/>'
+    + T(514,184,"≈ +3.5 K",{fill:C.ink,size:13}),
+  rack: () => grid()
+    + R(150,54,340,254,{rx:10,fill:"#0b141b"})
+    + R(172,78,296,58,{rx:5,fill:"#0c1820"})
+    + CI(210,107,15,{stroke:C.acc}) + L(210,107,220,96,C.acc,1.4)
+    + CI(260,107,15) + CI(310,107,15) + CI(360,107,15)
+    + T(400,112,"接收机",{size:12,fill:C.dim})
+    + R(172,154,296,44,{rx:5,fill:"#0c1820"})
+    + '<path d="M186 184 L230 184 L244 166 L262 196 L286 172 L340 184 L440 184" fill="none" stroke="'+C.acc+'" stroke-width="1.4" opacity="0.9"/>'
+    + T(400,168,"输出",{size:12,fill:C.dim})
+    + R(172,214,140,66,{rx:5,fill:"#0c1820"}) + R(328,214,140,66,{rx:5,fill:"#0c1820"})
+    + T(186,240,"液氮冷却",{size:12}) + T(342,240,"接头重焊",{size:12})
+    + T(186,264,"– 已做",{size:11,fill:C.acc}) + T(342,264,"– 已做",{size:11,fill:C.acc}),
+  pigeon: () => grid() + stars()
+    + '<ellipse cx="320" cy="150" rx="126" ry="72" fill="none" stroke="'+C.line+'" stroke-width="1.6"/>'
+    + '<ellipse cx="320" cy="150" rx="92" ry="50" fill="#0c1820" stroke="'+C.acc+'" stroke-width="1.2" opacity=".8"/>'
+    + '<ellipse cx="286" cy="146" rx="26" ry="17" fill="#16232c" stroke="'+C.ink+'" stroke-width="1.1"/>'
+    + CI(308,134,8,{fill:"#16232c",stroke:C.ink,sw:1.1})
+    + '<path d="M316 133 L326 135 L316 139 Z" fill="'+C.warm+'"/>'
+    + '<ellipse cx="356" cy="158" rx="24" ry="16" fill="#16232c" stroke="'+C.ink+'" stroke-width="1.1"/>'
+    + CI(376,146,7.5,{fill:"#16232c",stroke:C.ink,sw:1.1})
+    + '<path d="M383 145 L392 147 L383 151 Z" fill="'+C.warm+'"/>'
+    + [[252,196],[300,204],[348,198],[392,192],[272,214],[330,216]].map(p=>CI(p[0],p[1],3,{fill:C.ink,stroke:"none",extra:'opacity="0.5"'})).join("")
+    + T(320,262,"“白色电介质材料”",{anchor:"middle",size:13,fill:C.ink})
+    + T(320,286,"清理并送走之后，噪声没有变化",{anchor:"middle",size:12}),
+  princeton: () => grid()
+    + '<path d="M150 250 C 260 150, 380 150, 496 236" fill="none" stroke="'+C.line+'" stroke-width="1.3" stroke-dasharray="6 7"/>'
+    + CI(150,250,9,{fill:"#0f2a26",stroke:C.acc,sw:1.6}) + CI(496,236,9,{fill:"#0f2a26",stroke:C.acc,sw:1.6})
+    + T(150,286,"霍姆德尔 · 贝尔实验室",{anchor:"middle",size:12.5,fill:C.ink})
+    + T(496,272,"普林斯顿 · 迪克小组",{anchor:"middle",size:12.5,fill:C.ink})
+    + T(150,312,"测到一段无法消除的噪声",{anchor:"middle",size:11.5})
+    + T(496,298,"正在造探测器，算过它的温度",{anchor:"middle",size:11.5})
+    + T(323,132,"两个小组，两种做法",{anchor:"middle",size:13,fill:C.dim,ls:1}),
+  letter: () => grid()
+    + R(180,44,280,272,{rx:6,fill:"#0c141a"})
+    + R(204,70,232,10,{rx:3,fill:C.line2||"#24404e",stroke:"none"})
+    + [100,124,148,172,196,220,244,268,292].map(y=>R(204,y,208,6,{rx:3,fill:"#1b2a34",stroke:"none"})).join("")
+    + R(204,244,232,40,{rx:5,fill:"#101c24"})
+    + T(214,262,"Astrophysical Journal",{size:11,fill:C.dim})
+    + T(214,278,"142, 414 / 419（1965）",{size:11,fill:C.acc})
+    + '<path d="M470 96 L520 96 L520 146 L470 146 Z" fill="none" stroke="'+C.warm+'" stroke-width="1.1" opacity="0.7"/>'
+    + T(495,126,"背靠背",{anchor:"middle",size:11,fill:C.warm}),
+  temp: () => grid()
+    + L(120,70,120,296,C.line,1.3)
+    + [0,1,2,3,4,5].map(i=>{ const y=296-i*45; return L(108,y,120,y,C.line,1) + T(96,y+4,String(i),{anchor:"end",size:11}); }).join("")
+    + T(96,58,"K",{anchor:"end",size:11,fill:C.dim})
+    + L(120,296-3.5*45,560,296-3.5*45,C.warm,1.6)
+    + T(566,296-3.5*45+4,"3.5 K",{anchor:"end",fill:C.warm,size:13})
+    + L(120,296-2.7*45,560,296-2.7*45,C.acc,1.6)
+    + T(566,296-2.7*45+4,"2.7 K",{anchor:"end",fill:C.acc,size:13})
+    + T(126,296-3.5*45-10,"1965 年报告值",{size:11.5,fill:C.warm})
+    + T(126,296-2.7*45+22,"后续修正值",{size:11.5,fill:C.acc}),
+  timeline: () => grid()
+    + L(70,196,574,196,C.line,1.4)
+    + [[150,"1948"],[320,"1964"],[470,"1965"]].map(p=>CI(p[0],196,7,{fill:"#0f2a26",stroke:C.acc,sw:1.5}) + T(p[0],172,p[1],{anchor:"middle",size:13,fill:C.ink})).join("")
+    + T(150,228,"理论上算过：",{anchor:"middle",size:12}) + T(150,248,"宇宙曾极热致密，",{anchor:"middle",size:11.5}) + T(150,266,"今天应剩一层冷辐射",{anchor:"middle",size:11.5})
+    + T(320,228,"测到无法消除的",{anchor:"middle",size:12}) + T(320,248,"各向同性噪声",{anchor:"middle",size:11.5}) + T(320,266,"先怀疑自己",{anchor:"middle",size:11.5})
+    + T(470,228,"观测与解释",{anchor:"middle",size:12}) + T(470,248,"同期刊出",{anchor:"middle",size:11.5}) + T(470,266,"噪声有了名字",{anchor:"middle",size:11.5}),
+  fireball: () => grid()
+    + CI(320,180,26,{fill:"#12262c",stroke:C.warm,sw:1.6})
+    + CI(320,180,58,{stroke:C.line,sw:1.2,extra:'opacity="0.8"'})
+    + CI(320,180,92,{stroke:C.line,sw:1.1,extra:'opacity="0.6"'})
+    + CI(320,180,128,{stroke:C.line,sw:1,extra:'opacity="0.42"'})
+    + CI(320,180,166,{stroke:C.line,sw:1,extra:'opacity="0.28"'})
+    + T(320,60,"曾经极热、极密",{anchor:"middle",size:13,fill:C.warm})
+    + T(320,312,"今天剩下的，只有 2.7 K 的余温",{anchor:"middle",size:12.5,fill:C.ink}),
+
+  sky: () => grid() + stars()
+    + CI(320,182,114,{stroke:C.line,sw:1.3,extra:'opacity="0.7"'})
+    + CI(320,182,72,{stroke:C.line,sw:1,extra:'opacity="0.38"'})
+    + [0,45,90,135,180,225,270,315].map(a => {
+        const r = Math.PI*a/180, dx = -Math.cos(r), dy = -Math.sin(r);
+        const x1 = 320+Math.cos(r)*156, y1 = 182+Math.sin(r)*156;
+        const x2 = 320+Math.cos(r)*118, y2 = 182+Math.sin(r)*118;
+        const b = Math.atan2(dy, dx), a1 = b+Math.PI*0.82, a2 = b-Math.PI*0.82;
+        return '<path d="M'+x1.toFixed(1)+' '+y1.toFixed(1)+' L'+x2.toFixed(1)+' '+y2.toFixed(1)+'" stroke="'+C.acc+'" stroke-width="1.4" opacity="0.8"/>'
+          + '<path d="M'+x2.toFixed(1)+' '+y2.toFixed(1)+' L'+(x2+Math.cos(a1)*11).toFixed(1)+' '+(y2+Math.sin(a1)*11).toFixed(1)
+          + ' M'+x2.toFixed(1)+' '+y2.toFixed(1)+' L'+(x2+Math.cos(a2)*11).toFixed(1)+' '+(y2+Math.sin(a2)*11).toFixed(1)+'" stroke="'+C.acc+'" stroke-width="1.4"/>';
+      }).join("")
+    + T(320,58,"从每一个方向测，强度都一样",{anchor:"middle",size:12.5,fill:C.ink})
+    + T(320,320,"各向同性 · 把所有「某个具体来源」整类排除",{anchor:"middle",size:12,fill:C.acc}),
+
+  ward: () => grid()
+    + L(320,52,320,314,C.line,1,'stroke-dasharray="6 7"')
+    + T(158,74,"第一诊室 · 医生与医学生",{anchor:"middle",size:12,fill:C.ink})
+    + T(482,74,"第二诊室 · 助产士",{anchor:"middle",size:12,fill:C.ink})
+    + [0,1,2].map(i => { const y = 112 + i*64;
+        return R(60,y,190,30,{rx:5,fill:"#0c1820"}) + R(52,y-16,14,46,{rx:4,fill:"#0c1820"})
+             + L(60,y+34,250,y+34,C.line,1)
+             + R(390,y,190,30,{rx:5,fill:"#0c1820"}) + R(382,y-16,14,46,{rx:4,fill:"#0c1820"})
+             + L(390,y+34,580,y+34,C.line,1); }).join("")
+    + T(158,300,"同样的产床，同样的器械",{anchor:"middle",size:11})
+    + T(482,300,"同样的产床，同样的器械",{anchor:"middle",size:11}),
+
+  bars: () => grid()
+    + L(90,290,590,290,C.line,1.3) + L(90,74,90,290,C.line,1.3)
+    + [0,1,2,3].map(i => { const y = 290-i*53; return L(78,y,90,y,C.line,1) + T(70,y+4,(i*5)+"%",{anchor:"end",size:10.5}); }).join("")
+    + R(150,185,86,105,{rx:4,fill:"#241416",stroke:C.red,sw:1.2})
+    + R(280,250,86,40,{rx:4,fill:"#12262c",stroke:C.acc,sw:1.2})
+    + R(430,277,86,13,{rx:4,fill:"#0f2a26",stroke:C.acc,sw:1.2})
+    + T(193,306,"第一诊室 1846",{anchor:"middle",size:11})
+    + T(323,306,"第二诊室 1846",{anchor:"middle",size:11})
+    + T(473,306,"第一诊室 · 洗手后",{anchor:"middle",size:11,fill:C.acc})
+    + T(340,54,"产褥热死亡率（示意图，非精确数值）",{anchor:"middle",size:11.5,fill:C.dim}),
+
+  hand: () => grid()
+    + '<path d="M196 216 Q320 182 444 216 L424 296 Q320 316 216 296 Z" fill="#0c1820" stroke="'+C.line+'" stroke-width="1.4"/>'
+    + '<path d="M212 238 Q320 212 428 238" fill="none" stroke="'+C.acc+'" stroke-width="1.2" opacity="0.8"/>'
+    + [[250,200],[294,190],[338,188],[380,196]].map(p => '<path d="M'+p[0]+' '+p[1]+' l0 -54" stroke="'+C.ink+'" stroke-width="7" stroke-linecap="round" opacity="0.5"/>').join("")
+    + '<path d="M226 186 Q320 142 414 186" fill="none" stroke="'+C.ink+'" stroke-width="1.1" opacity="0.4"/>'
+    + [[238,258],[300,266],[362,262],[406,252]].map(p => CI(p[0],p[1],3.4,{fill:C.acc,stroke:"none",extra:'opacity="0.55"'})).join("")
+    + T(320,332,"氯化石灰溶液 · 进产房前必须洗手",{anchor:"middle",size:12}),
+
+  flask: () => grid()
+    + '<path d="M286 230 L286 146 C 286 112, 322 114, 342 130 C 364 148, 372 178, 398 152" fill="none" stroke="'+C.line+'" stroke-width="9" stroke-linecap="round"/>'
+    + '<path d="M286 230 L286 146 C 286 112, 322 114, 342 130 C 364 148, 372 178, 398 152" fill="none" stroke="#070b0f" stroke-width="4" stroke-linecap="round"/>'
+    + '<rect x="252" y="222" width="150" height="90" rx="42" fill="#0c1820" stroke="'+C.line+'" stroke-width="1.5"/>'
+    + '<rect x="260" y="266" width="134" height="38" rx="19" fill="#12262c"/>'
+    + [[344,134],[352,146],[358,158],[362,170]].map(p => CI(p[0],p[1],2.6,{fill:C.ink,stroke:"none",extra:'opacity="0.5"'})).join("")
+    + T(398,132,"空气自由进出",{size:11.5,fill:C.acc})
+    + T(366,196,"灰尘留在弯处",{size:11.5,fill:C.warm})
+    + T(327,338,"鹅颈瓶 · 培养液",{anchor:"middle",size:12}),
+
+  dish: () => grid()
+    + CI(320,180,112,{stroke:C.line,sw:1.6})
+    + CI(320,180,94,{stroke:C.line,sw:1,extra:'opacity="0.45"'})
+    + [[282,146],[330,138],[364,164],[300,192],[346,200],[286,228],[338,240],[370,210],[258,186]].map((p,i) =>
+        CI(p[0],p[1],i%3===0?7:5,{fill:"#16232c",stroke:C.acc,sw:1,extra:'opacity="'+(0.45+i*0.05).toFixed(2)+'"'})).join("")
+    + T(320,330,"培养皿里的菌落",{anchor:"middle",size:12}),
+
+  drift: () => grid()
+    + '<path d="M118 140 C 158 96, 250 92, 286 128 C 316 156, 300 196, 262 210 C 236 250, 180 258, 148 232 C 112 204, 94 172, 118 140 Z" fill="#0c1820" stroke="'+C.acc+'" stroke-width="1.3"/>'
+    + '<path d="M332 150 C 370 108, 458 106, 494 142 C 526 174, 510 216, 470 228 C 442 268, 386 272, 354 246 C 320 218, 304 182, 332 150 Z" fill="#0c1820" stroke="'+C.acc+'" stroke-width="1.3"/>'
+    + '<path d="M288 172 L330 178" stroke="'+C.warm+'" stroke-width="1.2" stroke-dasharray="4 5"/>'
+    + '<path d="M262 94 L234 56 M494 104 L522 64" stroke="'+C.warm+'" stroke-width="1.2"/>'
+    + '<path d="M234 56 l-13 15 M234 56 l15 11 M522 64 l-13 15 M522 64 l15 11" stroke="'+C.warm+'" stroke-width="1.2"/>'
+    + T(320,310,"两块大陆的海岸线可以拼合",{anchor:"middle",size:12}),
+
+  strata: () => grid()
+    + [0,1,2,3,4].map(i => R(70,100+i*44,500,44,{fill:i%2?"#0c1820":"#0a141a",stroke:C.line,sw:1})).join("")
+    + L(120,100,120,320,C.warm,1,'stroke-dasharray="4 5"')
+    + '<path d="M300 320 C 320 272, 316 236, 336 204 C 352 178, 344 150, 330 100" fill="none" stroke="'+C.acc+'" stroke-width="1.4"/>'
+    + [[300,294],[306,262],[316,230],[332,194],[340,162]].map(p =>
+        '<path d="M'+p[0]+' '+p[1]+' q 14 -9 27 0 q -14 9 -27 0 Z" fill="none" stroke="'+C.acc+'" stroke-width="1"/>').join("")
+    + T(126,92,"同一条地层界线",{size:11,fill:C.warm})
+    + T(356,218,"同一种化石",{size:11,fill:C.acc}),
+
+  stomach: () => grid()
+    + '<path d="M278 90 C 244 94, 234 130, 242 162 C 250 200, 286 234, 330 242 C 372 250, 402 222, 394 186 C 388 158, 356 148, 344 128 C 334 110, 310 86, 278 90 Z" fill="#0c1820" stroke="'+C.line+'" stroke-width="1.4"/>'
+    + '<path d="M266 98 C 260 132, 268 172, 292 204" fill="none" stroke="'+C.ink+'" stroke-width="1" opacity="0.35"/>'
+    + CI(322,178,26,{fill:"#1d1113",stroke:C.red,sw:1.2})
+    + [[310,166],[334,170],[326,192],[312,188],[338,186]].map(p =>
+        '<path d="M'+p[0]+' '+p[1]+' q 5 -8 10 0 q -5 8 -10 0" fill="none" stroke="'+C.warm+'" stroke-width="1.2"/>').join("")
+    + T(322,290,"溃疡处与螺旋形细菌",{anchor:"middle",size:12}),
+
+  scopes: () => grid()
+    + R(250,252,60,18,{rx:4,fill:"#0c1820"})
+    + '<path d="M280 252 L280 176" stroke="'+C.line+'" stroke-width="6"/>'
+    + '<path d="M280 176 C 280 150, 300 140, 330 140" fill="none" stroke="'+C.line+'" stroke-width="6" stroke-linecap="round"/>'
+    + CI(336,140,14,{fill:"#0c1820",stroke:C.acc,sw:1.3})
+    + R(178,270,224,10,{rx:3,fill:"#0c1820"})
+    + CI(224,262,26,{fill:"#0a141a",stroke:C.line,sw:1.1})
+    + [[214,254],[232,258],[222,270]].map(p =>
+        '<path d="M'+p[0]+' '+p[1]+' q 6 -8 12 0 q -6 8 -12 0" fill="none" stroke="'+C.warm+'" stroke-width="1.2"/>').join("")
+    + T(420,266,"活检样本",{size:11.5,fill:C.dim})
+    + T(320,330,"从胃里取一小块组织，看它下面有什么",{anchor:"middle",size:11.5}),
+
+  sun: () => grid() + stars()
+    + CI(180,140,58,{fill:"#1a1408",stroke:C.warm,sw:1.8})
+    + CI(180,140,40,{fill:"#241a0a",stroke:C.warm,sw:1,extra:'opacity="0.55"'})
+    + [[262,96],[288,140],[260,186],[304,116],[304,168]].map(p =>
+        '<path d="M246 140 L'+p[0]+' '+p[1]+'" stroke="'+C.acc+'" stroke-width="1.1" opacity="0.7"/>').join("")
+    + R(356,228,228,70,{rx:8,fill:"#0c1820"})
+    + L(372,248,568,248,C.acc,1,'opacity="0.45"')
+    + T(470,272,"每秒有海量中微子穿过",{anchor:"middle",size:11})
+    + T(470,290,"只有极少数留下痕迹",{anchor:"middle",size:11,fill:C.acc})
+    + T(180,226,"太阳内部的核反应",{anchor:"middle",size:11.5,fill:C.warm}),
+
+  mine: () => grid()
+    + R(60,116,520,40,{fill:"#0a141a",stroke:C.line,sw:1})
+    + R(60,156,520,54,{fill:"#0c1820",stroke:C.line,sw:1})
+    + R(60,210,520,106,{fill:"#080f14",stroke:C.line,sw:1})
+    + R(118,92,58,24,{rx:4,fill:"#0c1820",stroke:C.line})
+    + L(147,116,147,316,C.line,4)
+    + R(196,236,168,56,{rx:6,fill:"#12262c",stroke:C.acc,sw:1.3})
+    + T(280,270,"探测器 · 地下深处",{anchor:"middle",size:11.5,fill:C.acc})
+    + T(320,330,"用厚岩层挡掉其他粒子",{anchor:"middle",size:11.5})
+};
+
+/* ============================================================================
+   3 · 配乐引擎（纯 Web Audio 合成，无音频文件）
+   ========================================================================== */
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+function makeImpulse(ctx, seconds, decay) {
+  seconds = seconds || 3.4; decay = decay || 2.4;
+  const rate = ctx.sampleRate, len = Math.max(1, Math.floor(rate * seconds));
+  const buf = ctx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) { const t = i / len; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay); }
+  }
+  return buf;
+}
+function makeNoise(ctx, seconds) {
+  const rate = ctx.sampleRate, len = Math.max(1, Math.floor(rate * (seconds || 4)));
+  const buf = ctx.createBuffer(1, len, rate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+const PROG = [
+  { name:"i",  root:50, notes:[50,53,57,62] },
+  { name:"i",  root:50, notes:[50,53,57,62] },
+  { name:"VI", root:46, notes:[46,50,53,58] },
+  { name:"V",  root:45, notes:[45,49,52,57] }
+];
+const MELODY = [62,65,67,69,72,74,77,79];
+
+class ColdScore {
+  constructor(ctx, out, opts) {
+    opts = opts || {};
+    this.ctx = ctx;
+    this.bpm = opts.bpm || 62;
+    this.beat = 60 / this.bpm;
+    this.bar = this.beat * 4;
+    this.playing = false;
+    this.sources = [];
+    this.mood = { brightness: 0.30, tension: 0.55 };
+    this.moodTarget = { brightness: 0.30, tension: 0.55 };
+    this.glideK = 0.02;
+    this._lastDrone = -1;
+
+    this.bus = ctx.createGain(); this.bus.gain.value = 1; this.bus.connect(out);
+    this.dry = ctx.createGain(); this.dry.gain.value = 0.9; this.dry.connect(this.bus);
+    const damp = ctx.createBiquadFilter(); damp.type = "lowpass"; damp.frequency.value = 2000;
+    this.conv = ctx.createConvolver(); this.conv.buffer = makeImpulse(ctx);
+    this.verbSend = ctx.createGain(); this.verbSend.gain.value = 0.55;
+    const verbOut = ctx.createGain(); verbOut.gain.value = 0.85;
+    this.verbSend.connect(damp).connect(this.conv).connect(verbOut).connect(this.bus);
+  }
+  send(node, amount) { const g = this.ctx.createGain(); g.gain.value = amount; node.connect(g).connect(this.verbSend); }
+  getChord(bar) { return PROG[Math.floor(bar / 2) % PROG.length]; }
+
+  setMood(target, glide) {
+    glide = Math.max(0.5, glide || 4);
+    this.moodTarget = { brightness: clamp01(target.brightness), tension: clamp01(target.tension) };
+    this.glideK = 1 - Math.exp(-0.055 / glide);
+  }
+
+  startVoices(t0) {
+    const ctx = this.ctx;
+    const droneGain = this.droneGain = ctx.createGain();
+    droneGain.gain.setValueAtTime(0.0001, t0);
+    droneGain.gain.linearRampToValueAtTime(0.045 + this.mood.tension * 0.085, t0 + 4);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 260; lp.Q.value = 4;
+    this.droneLP = lp;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.031;
+    const lfoAmt = ctx.createGain(); lfoAmt.gain.value = 110;
+    lfo.connect(lfoAmt).connect(lp.frequency); lfo.start(t0);
+    this.sources.push(lfo);
+    [38, 50].forEach((m, i) => {
+      const o = ctx.createOscillator(); o.type = "sawtooth";
+      o.frequency.value = mtof(m); o.detune.value = i ? 7 : -8;
+      o.connect(lp); o.start(t0); this.sources.push(o);
+    });
+    lp.connect(droneGain); droneGain.connect(this.dry); this.send(droneGain, 0.3);
+
+    const windGain = this.windGain = ctx.createGain();
+    windGain.gain.value = 0.006 + this.mood.tension * 0.012;
+    const src = ctx.createBufferSource(); src.buffer = makeNoise(ctx, 4); src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 700; bp.Q.value = 1.1;
+    const w1 = ctx.createOscillator(); w1.frequency.value = 0.017;
+    const wa1 = ctx.createGain(); wa1.gain.value = 420;
+    w1.connect(wa1).connect(bp.frequency); w1.start(t0);
+    const w2 = ctx.createOscillator(); w2.frequency.value = 0.011;
+    const wa2 = ctx.createGain(); wa2.gain.value = 0.006;
+    w2.connect(wa2).connect(windGain.gain); w2.start(t0);
+    this.sources.push(src, w1, w2);
+    src.connect(bp).connect(windGain); windGain.connect(this.dry); this.send(windGain, 0.5);
+  }
+
+  pad(t, notes, dur) {
+    const ctx = this.ctx, br = this.mood.brightness;
+    const all = br > 0.55 ? notes.concat([notes[notes.length - 1] + 12]) : notes;
+    all.forEach((m, i) => {
+      const o = ctx.createOscillator();
+      o.type = i % 2 ? "sawtooth" : "triangle";
+      o.frequency.value = mtof(m); o.detune.value = Math.random() * 16 - 8;
+      const f = ctx.createBiquadFilter();
+      f.type = "lowpass"; f.frequency.value = 420 + br * 1500 + i * 70; f.Q.value = 0.8;
+      const g = ctx.createGain();
+      const peak = (0.035 + br * 0.030) / (1 + i * 0.55);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(peak, t + 2.6);
+      g.gain.setValueAtTime(peak, t + dur - 1.8);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      o.connect(f).connect(g); g.connect(this.dry); this.send(g, 0.6);
+      o.start(t); o.stop(t + dur + 0.1);
+    });
+  }
+  pizz(t, m, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m);
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(1100, t); f.frequency.exponentialRampToValueAtTime(170, t + 0.4);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vel, t + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+    o.connect(f).connect(g); g.connect(this.dry); this.send(g, 0.45);
+    o.start(t); o.stop(t + 0.7);
+  }
+  melody(t, m, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = mtof(m);
+    const o2 = ctx.createOscillator(); o2.type = "sine"; o2.frequency.value = mtof(m) * 2.005;
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vel, t + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+    o.connect(g); o2.connect(g2).connect(g); g.connect(this.dry); this.send(g, 1.0);
+    o.start(t); o.stop(t + 3.4); o2.start(t); o2.stop(t + 3.4);
+  }
+  bell(t, m, vel) {
+    const ctx = this.ctx;
+    [1, 2.01, 2.98, 4.1].forEach((mult, i) => {
+      const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = mtof(m) * mult;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vel / (1 + i * 1.7), t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 4.6 / (1 + i * 0.35));
+      o.connect(g); g.connect(this.dry); this.send(g, 1.1);
+      o.start(t); o.stop(t + 5);
+    });
+  }
+  thump(t, vel) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(mtof(45), t);
+    o.frequency.exponentialRampToValueAtTime(mtof(33), t + 0.28);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vel, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    o.connect(g); g.connect(this.dry);
+    o.start(t); o.stop(t + 0.6);
+  }
+
+  scheduleBar(bar, t) {
+    const ch = this.getChord(bar), br = this.mood.brightness, te = this.mood.tension;
+    if (bar % 2 === 0) this.pad(t, ch.notes, 2 * this.bar + 1.6);
+    this.pizz(t, ch.root - 12 >= 26 ? ch.root - 12 : ch.root, 0.12 + br * 0.05);
+    if (Math.random() < 0.30 + br * 0.35) this.pizz(t + 2 * this.beat, ch.root, 0.085);
+    if (Math.random() < 0.28 + br * 0.45) {
+      const when = t + this.beat * Math.floor(Math.random() * 4);
+      this.melody(when, MELODY[Math.floor(Math.random() * MELODY.length)], 0.022 + br * 0.016);
+    }
+    if (bar % 3 === 2 && Math.random() < 0.35 + br * 0.55)
+      this.bell(t + this.beat * 2, ch.notes[ch.notes.length - 1] + 12, 0.018 + br * 0.045);
+    const hb = te > 0.78 ? 2 : (te > 0.6 ? 3 : 4);
+    if (bar % hb === 0) { this.thump(t, 0.06 + te * 0.10); this.thump(t + 0.42, 0.04 + te * 0.06); }
+  }
+
+  tick() {
+    const m = this.mood, tg = this.moodTarget, k = this.glideK;
+    m.brightness += (tg.brightness - m.brightness) * k;
+    m.tension += (tg.tension - m.tension) * k;
+    if (Math.abs(m.tension - this._lastDrone) > 0.012) {
+      this._lastDrone = m.tension;
+      const now = this.ctx.currentTime;
+      if (this.droneGain) this.droneGain.gain.setTargetAtTime(0.045 + m.tension * 0.085, now, 0.8);
+      if (this.windGain) this.windGain.gain.setTargetAtTime(0.006 + m.tension * 0.012, now, 0.8);
+      if (this.droneLP) this.droneLP.frequency.setTargetAtTime(210 + m.tension * 150, now, 1.2);
+    }
+    const now = this.ctx.currentTime;
+    while (this.nextBarTime < now + 0.4) {
+      this.scheduleBar(this.barIndex, this.nextBarTime);
+      this.barIndex++;
+      this.nextBarTime += this.bar;
+    }
+  }
+
+  start() {
+    const ctx = this.ctx;
+    if (ctx.state === "suspended") ctx.resume();
+    const t0 = ctx.currentTime + 0.08;
+    this.t0 = t0; this.barIndex = 0; this.nextBarTime = t0; this.playing = true; this.sources = [];
+    this.bus.gain.cancelScheduledValues(ctx.currentTime);
+    this.bus.gain.setValueAtTime(Math.max(this.bus.gain.value, 0.0001), ctx.currentTime);
+    this.bus.gain.linearRampToValueAtTime(1, t0 + 1.5);
+    this.startVoices(t0);
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.tick(), 55);
+    this.tick();
+  }
+  stop() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    this.playing = false;
+    clearInterval(this.timer);
+    this.bus.gain.cancelScheduledValues(t);
+    this.bus.gain.setValueAtTime(Math.max(this.bus.gain.value, 0.0001), t);
+    this.bus.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+    this.sources.forEach(s => { try { s.stop(t + 1.3); } catch (e) {} });
+    this.sources = [];
+  }
+  /* 额外的一次性低音下坠，用于答错 */
+  sink(t) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(mtof(41), t);
+    o.frequency.exponentialRampToValueAtTime(mtof(29), t + 1.4);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    o.connect(g); g.connect(this.dry); this.send(g, 0.5);
+    o.start(t); o.stop(t + 2);
+  }
+  /* 额外的一次性高音亮起，用于答对 / 得到线索 */
+  lift(t, m) {
+    const ctx = this.ctx;
+    [0, 7].forEach((iv, i) => {
+      const o = ctx.createOscillator(); o.type = "triangle";
+      o.frequency.value = mtof((m || 74) + iv);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t + i * 0.09);
+      g.gain.linearRampToValueAtTime(0.05 / (1 + i * 0.7), t + i * 0.09 + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + 2.4);
+      o.connect(g); g.connect(this.dry); this.send(g, 1.0);
+      o.start(t + i * 0.09); o.stop(t + i * 0.09 + 2.6);
+    });
+  }
+}
+
+/* ============================================================================
+   4 · 音效
+   ========================================================================== */
+class Sfx {
+  constructor(ctx, out) {
+    this.ctx = ctx; this.out = out;
+    this.noise = makeNoise(ctx, 2);
+    this.conv = ctx.createConvolver(); this.conv.buffer = makeImpulse(ctx, 2.2, 3);
+    this.send = ctx.createGain(); this.send.gain.value = 0.32;
+    this.send.connect(this.conv).connect(out);
+  }
+  env(g, t, vel, attack, dur) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vel, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  tone(t, m, dur, type, vel, rev) {
+    const ctx = this.ctx;
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = mtof(m);
+    const g = ctx.createGain(); this.env(g, t, vel, 0.012, dur);
+    o.connect(g); g.connect(this.out);
+    const s = ctx.createGain(); s.gain.value = rev; g.connect(s).connect(this.send);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  noiseHit(t, f0, f1, q, vel, dur) {
+    const ctx = this.ctx;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain(); this.env(g, t, vel, 0.006, dur);
+    src.connect(f).connect(g); g.connect(this.out);
+    const s = ctx.createGain(); s.gain.value = 0.4; g.connect(s).connect(this.send);
+    src.start(t); src.stop(t + dur + 0.05);
+  }
+  correct(t) { this.tone(t, 69, 1.1, "triangle", 0.13, 0.55); this.tone(t + 0.10, 76, 1.5, "triangle", 0.12, 0.75); this.tone(t + 0.10, 88, 0.9, "sine", 0.045, 1.0); }
+  wrong(t) { this.tone(t, 50, 0.85, "sawtooth", 0.10, 0.35); this.tone(t + 0.015, 49, 0.9, "sawtooth", 0.09, 0.35); this.noiseHit(t, 900, 220, 1.0, 0.10, 0.30); }
+  page(t) { this.noiseHit(t, 2200, 620, 1.4, 0.09, 0.17); }
+  clue(t) { this.tone(t, 88, 2.6, "sine", 0.085, 1.2); this.tone(t + 0.09, 95, 2.2, "sine", 0.06, 1.2); this.tone(t + 0.09, 100, 1.6, "sine", 0.028, 1.0); }
+  reveal(t) { this.noiseHit(t, 1500, 3400, 1.1, 0.07, 0.5); this.tone(t + 0.02, 81, 1.6, "sine", 0.04, 1.0); }
+  pick(t) { this.tone(t, 62, 1.5, "triangle", 0.075, 0.9); this.tone(t + 0.09, 67, 1.7, "triangle", 0.055, 0.95); }
+  finish(t) { [62, 69, 74, 81].forEach((m, i) => this.tone(t + i * 0.16, m, 2.6 - i * 0.2, "triangle", 0.10, 1.0)); }
+}
+
+/* ============================================================================
+   5 · 音频总线 + 剧情强度联动
+   ========================================================================== */
+const Audio_ = {
+  prefs: { music: true, sfx: true, volume: 0.78, simple: false },
+  base: { brightness: 0.30, tension: 0.55 },
+  ready: false,
+  init() {
+    if (this.ready) { if (this.ctx.state === "suspended") this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = this.ctx = new AC();
+    window.__ctx = ctx;
+    this.master = ctx.createGain(); this.master.gain.value = this.prefs.volume;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -10; comp.knee.value = 8; comp.ratio.value = 5; comp.attack.value = 0.005; comp.release.value = 0.26;
+    this.analyser = ctx.createAnalyser(); this.analyser.fftSize = 1024;
+    this.master.connect(comp).connect(this.analyser).connect(ctx.destination);
+    this.musicGain = ctx.createGain(); this.musicGain.gain.value = this.prefs.music ? 0.85 : 0.0001;
+    this.musicGain.connect(this.master);
+    this.sfxGain = ctx.createGain(); this.sfxGain.gain.value = this.prefs.sfx ? 0.9 : 0.0001;
+    this.sfxGain.connect(this.master);
+    this.score = new ColdScore(ctx, this.musicGain, { bpm: 62 });
+    this.sfx = new Sfx(ctx, this.sfxGain);
+    this.ready = true;
+  },
+  startMusic() { this.init(); if (!this.score.playing) this.score.start(); },
+  setBase(b) { this.base = b; this.score.setMood(b, 6); },
+  at() { return this.ctx.currentTime + 0.02; },
+  onPage() { if (this.ready) this.sfx.page(this.at()); },
+  onReveal() { if (this.ready) this.sfx.reveal(this.at()); },
+  onPick() {
+    if (!this.ready) return;
+    this.sfx.pick(this.at());
+    const b = { brightness: this.base.brightness + 0.05, tension: this.base.tension - 0.05 };
+    this.score.setMood(b, 3);
+    clearTimeout(this._t3);
+    this._t3 = setTimeout(() => this.score.setMood(this.base, 6), 6000);
+  },
+  onCorrect(points) {
+    if (!this.ready) return;
+    this.sfx.correct(this.at());
+    this.score.lift(this.at(), points >= 100 ? 76 : 72);
+    const b = { brightness: this.base.brightness + (points >= 100 ? 0.22 : 0.13), tension: this.base.tension - 0.14 };
+    this.score.setMood(b, 1.2);
+    clearTimeout(this._t1);
+    this._t1 = setTimeout(() => this.score.setMood(this.base, 7), 7000);
+  },
+  onWrong() {
+    if (!this.ready) return;
+    this.sfx.wrong(this.at());
+    this.score.sink(this.at());
+    const b = { brightness: this.base.brightness - 0.14, tension: this.base.tension + 0.24 };
+    this.score.setMood(b, 0.8);
+    clearTimeout(this._t2);
+    this._t2 = setTimeout(() => this.score.setMood(this.base, 6), 9000);
+  },
+  onClue() {
+    if (!this.ready) return;
+    this.sfx.clue(this.at());
+    const b = { brightness: this.base.brightness + 0.12, tension: this.base.tension - 0.08 };
+    this.score.setMood(b, 2.5);
+    clearTimeout(this._t2);
+    this._t2 = setTimeout(() => this.score.setMood(this.base, 6), 9000);
+  },
+  onFinish() {
+    if (!this.ready) return;
+    this.sfx.finish(this.at());
+    this.score.setMood({ brightness: 0.85, tension: 0.22 }, 6);
+  },
+  mood() { return this.ready ? this.score.mood : { brightness: 0, tension: 0 }; }
+};
+
+/* ============================================================================
+   6 · 进度存档
+   ========================================================================== */
+const PKEY = "mists-evidence-v1";
+const AKEY = "mists-audio-v1";
+function loadAll() { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) { return {}; } }
+function saveState(st) {
+  try { const all = loadAll(); all[st.chapterId] = st; localStorage.setItem(PKEY, JSON.stringify(all)); return true; }
+  catch (e) { return false; }
+}
+function loadState(id) { return loadAll()[id] || null; }
+function loadPrefs() { try { return JSON.parse(localStorage.getItem(AKEY)) || null; } catch (e) { return null; } }
+function savePrefs(p) { try { localStorage.setItem(AKEY, JSON.stringify(p)); } catch (e) {} }
+
+/* ============================================================================
+   7 · 应用
+   ========================================================================== */
+const $ = s => document.querySelector(s);
+let state = null;
+
+function el(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function showError(msg) { const e = $("#err"); e.style.display = "block"; e.textContent = String(msg); }
+window.addEventListener("error", ev => showError("运行错误：" + ev.message));
+
+function chapter() { return CHAPTERS.find(c => c.id === state.chapterId); }
+function page() { return chapter().pages[state.index]; }
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200);
+}
+function showScreen(id) {
+  ["shelf", "reader", "result"].forEach(s => $("#" + s).classList.toggle("hidden", s !== id));
+  $("#brand").textContent = id === "shelf" ? "科学推理短篇 · 六关" : chapter().title;
+}
+
+/* ---------- 书架 ---------- */
+function renderShelf() {
+  const g = $("#shelfGrid"); g.innerHTML = "";
+  CHAPTERS.forEach(ch => {
+    const saved = loadState(ch.id);
+    const b = el("button", "chapter");
+    const st = saved ? (saved.done ? "已通关 · " + saved.score + " 分（可重做）" : "进行中 · 第 " + (saved.index + 1) + " / " + ch.pages.length + " 页") : "未开始";
+    b.innerHTML = '<span class="cover">' + svgWrap(ART[ch.cover]()) + "</span>"
+      + '<span class="body"><span class="t">' + ch.title + "</span>"
+      + '<span class="m">' + ch.domain + " · 难度 " + ch.difficulty + "/5 · 约 " + ch.minutes + " 分钟<br/>核心能力：" + ch.ability + "</span>"
+      + '<span class="s">' + st + "</span></span>";
+    b.onclick = () => startChapter(ch.id, saved && !saved.done ? saved : null);
+    g.appendChild(b);
+  });
+  const lock = el("div", "chapter locked");
+  lock.innerHTML = '<span class="cover">' + svgWrap(grid() + stars() + T(320,180,"待 添 加",{anchor:"middle",size:16,fill:C.dim,ls:6})) + "</span>"
+    + '<span class="body"><span class="t">后续关卡</span><span class="m">同一套引擎，换一份数据即可成关</span></span>';
+  g.appendChild(lock);
+}
+
+/* ---------- 进入章节 ---------- */
+function normalize(st) {
+  if (!st.answers) st.answers = {};
+  if (!st.polls) st.polls = {};
+  if (!st.clues) st.clues = [];
+  if (typeof st.simple !== "boolean") st.simple = false;
+  return st;
+}
+function startChapter(id, saved) {
+  if (saved) state = normalize(saved);
+  else state = { chapterId: id, index: 0, answers: {}, polls: {}, clues: [], done: false, score: 0, simple: Audio_.prefs.simple };
+  showScreen("reader");
+  Audio_.init();
+  Audio_.startMusic();
+  updateBase();
+  renderPage(true);
+}
+function updateBase() {
+  const ch = chapter();
+  const total = ch.pages.filter(p => p.type === "question").length;
+  const solved = Object.values(state.answers).filter(a => a.solved).length;
+  const prog = total ? solved / total : 0;
+  Audio_.setBase({ brightness: 0.26 + prog * 0.40, tension: 0.62 - prog * 0.26 });
+}
+
+/* ---------- 渲染一页 ---------- */
+function renderPage(first) {
+  const ch = chapter(), p = page();
+  $("#pbar").style.width = Math.round((state.index / ch.pages.length) * 100) + "%";
+  $("#pageInfo").textContent = ch.title + " · 第 " + (state.index + 1) + " / " + ch.pages.length + " 页";
+  $("#art").innerHTML = svgWrap((ART[p.art] || ART.fireball)());
+  const body = $("#panelBody"); body.innerHTML = "";
+  const f = $("#feedbackSlot"); if (f) f.remove();
+  if (p.title) body.appendChild(el("h2", "ptitle", p.title));
+  (p.text || []).forEach(t => body.appendChild(el("p", "ptext", t)));
+
+  if (p.reveal) {
+    const box = el("div", "reveal");
+    const html = '<div class="rlabel">' + p.reveal.label + '</div><div class="rtext">' + p.reveal.text + "</div>";
+    if (state.simple) {
+      box.innerHTML = html;
+      body.appendChild(box);
+    } else {
+      const btn = el("button", "ghost", "翻开记录");
+      btn.onclick = () => { Audio_.onReveal(); box.innerHTML = html; };
+      box.appendChild(btn);
+      body.appendChild(box);
+    }
+  }
+
+  const opts = el("div", "opts");
+  const acts = el("div", "acts");
+  const lastPage = state.index === ch.pages.length - 1;
+  const contBtn = () => {
+    const nb = el("button", "primary", lastPage ? "查看成绩 →" : "继续 →");
+    nb.onclick = () => nextPage();
+    return nb;
+  };
+
+  if (p.type === "question") {
+    body.appendChild(el("p", "ask", "从当时掌握的证据看，哪一个是最佳选择？"));
+    const rec = state.answers[p.qid] || (state.answers[p.qid] = { tries: 0, hint: false, solved: false, points: 0 });
+    p.options.forEach((o, i) => {
+      const b = el("button", "opt");
+      b.innerHTML = '<span class="k">' + "ABC"[i] + '</span><span>' + o.t + "</span>";
+      b.onclick = () => answer(i, b);
+      if (rec.solved) { b.disabled = true; if (o.ok) b.classList.add("right"); }
+      opts.appendChild(b);
+    });
+    if (!rec.solved) {
+      const hb = el("button", "ghost", "看提示（本题最高 30 分）");
+      hb.onclick = () => {
+        rec.hint = true;
+        hb.remove();
+        const h = el("div", "hintbox", "提示：" + p.hint);
+        body.insertBefore(h, opts);
+      };
+      acts.appendChild(hb);
+    } else {
+      acts.appendChild(contBtn());
+    }
+  } else if (p.type === "poll") {
+    body.appendChild(el("p", "ask", "不计分 · 先留下你此刻的想法，不必猜中后来发生了什么"));
+    const rec = state.polls[p.pid] || (state.polls[p.pid] = { choice: -1 });
+    p.options.forEach((o, i) => {
+      const b = el("button", "opt");
+      b.innerHTML = '<span class="k">' + "ABC"[i] + '</span><span>' + o.t + "</span>";
+      if (rec.choice === i) b.classList.add("chosen");
+      if (rec.choice >= 0) b.disabled = true;
+      b.onclick = () => {
+        if (rec.choice >= 0) return;
+        rec.choice = i;
+        b.classList.add("chosen");
+        opts.querySelectorAll(".opt").forEach(x => { x.disabled = true; });
+        Audio_.onPick();
+        acts.innerHTML = ""; acts.appendChild(contBtn());
+        saveState(state);
+      };
+      opts.appendChild(b);
+    });
+    if (rec.choice >= 0) acts.appendChild(contBtn());
+  } else if (p.type === "recall") {
+    const poll = ch.pages.find(x => x.type === "poll" && x.pid === p.pid);
+    const rec = state.polls[p.pid];
+    const box = el("div", "recallbox");
+    box.innerHTML = '<div class="rlabel">你当时的选择</div><div class="rtext">'
+      + (rec && rec.choice >= 0 && poll ? poll.options[rec.choice].t : "（当时跳过了这一问）") + "</div>";
+    body.appendChild(box);
+    acts.appendChild(contBtn());
+  } else {
+    acts.appendChild(contBtn());
+  }
+  body.appendChild(opts);
+  body.appendChild(acts);
+  const fb = el("div", "feedback"); fb.id = "feedbackSlot"; body.appendChild(fb);
+  updateStatus();
+  saveState(state);
+  if (!first) Audio_.onPage();
+}
+
+function answer(i, btn) {
+  const p = page();
+  const rec = state.answers[p.qid];
+  if (rec.solved) return;
+  const o = p.options[i];
+  rec.tries++;
+  if (o.ok) {
+    rec.solved = true;
+    rec.points = rec.hint ? 30 : (rec.tries === 1 ? 100 : 60);
+    btn.classList.add("right");
+    document.querySelectorAll(".opt").forEach(x => { x.disabled = true; });
+    document.querySelectorAll("#panelBody .acts button.ghost").forEach(x => x.remove());
+    let gained = false;
+    if (p.clue && state.clues.indexOf(p.clue) === -1) { state.clues.push(p.clue); gained = true; }
+    Audio_.onCorrect(rec.points);
+    if (gained) { Audio_.onClue(); toast("线索已收入线索本"); }
+    feedback(true, o.why, () => { nextPage(); });
+  } else {
+    btn.classList.add("wrong"); btn.disabled = true;
+    Audio_.onWrong();
+    feedback(false, o.why, null);
+  }
+  updateBase();
+  updateStatus();
+  saveState(state);
+}
+
+function feedback(ok, why, onContinue) {
+  const f = $("#feedbackSlot");
+  f.className = "feedback show " + (ok ? "good" : "bad");
+  f.innerHTML = "";
+  f.appendChild(el("div", "fb-head", ok ? "✓ 这就是当时最合理的下一步" : "✕ 这个选择与当时掌握的证据对不上"));
+  f.appendChild(el("p", "fb-body", why));
+  const b = el("button", "primary", ok ? "继续 →" : "重新作答");
+  b.onclick = () => {
+    if (ok) { onContinue(); }
+    else { f.className = "feedback"; f.innerHTML = ""; document.querySelectorAll(".opt").forEach(x => { if (!x.classList.contains("wrong")) x.disabled = false; }); }
+  };
+  f.appendChild(b);
+}
+
+function nextPage() {
+  const ch = chapter();
+  if (state.index >= ch.pages.length - 1) { finish(); return; }
+  let i = state.index + 1;
+  if (state.simple) {
+    while (i < ch.pages.length - 1 && (ch.pages[i].type === "poll" || ch.pages[i].type === "recall")) i++;
+  }
+  state.index = i;
+  saveState(state);
+  renderPage(false);
+}
+
+/* ---------- status / 线索本 ---------- */
+function updateStatus() {
+  $("#nbCount").textContent = state.clues.length;
+  renderDrawer();
+}
+function renderDrawer() {
+  const b = $("#drawerBody"); b.innerHTML = "";
+  if (!state || !state.clues.length) { b.appendChild(el("div", "clue", "还没有线索。答对关键题目会自动收入。")); return; }
+  state.clues.forEach(c => b.appendChild(el("div", "clue", c)));
+}
+function openDrawer(v) { $("#drawer").classList.toggle("open", v); $("#scrim").classList.toggle("open", v); }
+
+/* ---------- 结算 ---------- */
+function finish() {
+  const ch = chapter();
+  const qs = ch.pages.filter(p => p.type === "question");
+  let sum = 0, first = 0, fixed = 0, hinted = 0, missed = 0;
+  qs.forEach(p => {
+    const r = state.answers[p.qid] || { points: 0, tries: 0, hint: false, solved: false };
+    sum += r.points;
+    if (!r.solved) missed++;
+    else if (r.hint) hinted++;
+    else if (r.tries === 1) first++;
+    else fixed++;
+  });
+  const score = Math.round(sum / Math.max(1, qs.length));
+  state.done = true; state.score = score;
+  saveState(state);
+  Audio_.onFinish();
+  const tier = score >= 90 ? "优秀 · 证据链完整" : score >= 75 ? "良好 · 少数环节可以更谨慎" : score >= 60 ? "合格 · 建议回看错过的推理" : "继续探索 · 重点回看提示";
+
+  const b = $("#resultBody"); b.innerHTML = "";
+  b.innerHTML = '<div class="score">' + score + '<small>/ 100</small></div><div class="tier">' + tier + "</div>"
+    + '<table class="tbl">'
+    + "<tr><td>首次独立答对</td><td>" + first + " 题 × 100%</td></tr>"
+    + "<tr><td>纠错后答对</td><td>" + fixed + " 题 × 60%</td></tr>"
+    + "<tr><td>借助提示掌握</td><td>" + hinted + " 题 × 30%</td></tr>"
+    + "<tr><td>仍未解决</td><td>" + missed + " 题</td></tr>"
+    + "<tr><td>收集线索</td><td>" + state.clues.length + " 条</td></tr>"
+    + "</table>";
+  const h = el("h2", "ptitle", "值得回看的推理");
+  h.style.marginTop = "22px";
+  b.appendChild(h);
+  const cl = el("div", "clues");
+  state.clues.forEach(c => cl.appendChild(el("div", "clue", c)));
+  b.appendChild(cl);
+  const acts = el("div", "acts");
+  const a1 = el("button", "primary", "返回书架");
+  a1.onclick = () => { renderShelf(); showScreen("shelf"); };
+  const a2 = el("button", "ghost", "重做本关");
+  a2.onclick = () => startChapter(state.chapterId, null);
+  const a3 = el("button", "ghost", "导出成绩与线索");
+  a3.onclick = () => showExport();
+  acts.appendChild(a1); acts.appendChild(a2); acts.appendChild(a3);
+  b.appendChild(acts);
+  showScreen("result");
+}
+
+/* ---------- 成绩导出 ---------- */
+function exportText() {
+  const ch = chapter();
+  const qs = ch.pages.filter(p => p.type === "question");
+  const lines = ["《" + ch.title + "》成绩与线索", "得分：" + state.score + " / 100", ""];
+  qs.forEach((p, i) => {
+    const r = state.answers[p.qid] || {};
+    const label = !r.solved ? "未解决" : r.hint ? "借助提示掌握" : (r.tries === 1 ? "首次独立答对" : "纠错后答对");
+    lines.push("第 " + (i + 1) + " 题　" + label + "（" + (r.points || 0) + " 分）");
+  });
+  lines.push("", "线索（" + state.clues.length + " 条）");
+  if (!state.clues.length) lines.push("（无）");
+  state.clues.forEach(c => lines.push("· " + c));
+  const polls = ch.pages.filter(p => p.type === "poll");
+  if (polls.length) {
+    lines.push("", "我留下的倾向（不计分）");
+    polls.forEach(p => {
+      const r = state.polls[p.pid];
+      lines.push("· " + p.title + " → " + (r && r.choice >= 0 ? p.options[r.choice].t : "未记录"));
+    });
+  }
+  lines.push("", "— 由《迷雾中的证据》本机生成，进度只保存在这个浏览器里");
+  return lines.join("\n");
+}
+
+function showExport() {
+  const ov = el("div", "modal");
+  const box = el("div", "modalbox");
+  box.appendChild(el("h3", "", "成绩与线索"));
+  const ta = document.createElement("textarea");
+  ta.value = exportText(); ta.readOnly = true; ta.rows = 16;
+  box.appendChild(ta);
+  const row = el("div", "acts");
+  const cp = el("button", "primary", "复制到剪贴板");
+  cp.onclick = () => {
+    const done = () => toast("已复制到剪贴板");
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); document.execCommand("copy"); done(); });
+      } else { ta.select(); document.execCommand("copy"); done(); }
+    } catch (e) { toast("请手动全选复制"); }
+  };
+  const cl = el("button", "ghost", "关闭");
+  cl.onclick = () => ov.remove();
+  row.appendChild(cp); row.appendChild(cl);
+  box.appendChild(row);
+  ov.appendChild(box);
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+  ta.focus(); ta.select();
+}
+
+/* ---------- 顶栏与音频开关 ---------- */
+function bindChrome() {
+  const p = loadPrefs();
+  if (p) {
+    Audio_.prefs.music = p.music; Audio_.prefs.sfx = p.sfx; Audio_.prefs.volume = p.volume;
+    if (typeof p.simple === "boolean") Audio_.prefs.simple = p.simple;
+  }
+  $("#mMusic").checked = Audio_.prefs.music;
+  $("#mSfx").checked = Audio_.prefs.sfx;
+  $("#mSimple").checked = !!Audio_.prefs.simple;
+  $("#vol").value = Math.round(Audio_.prefs.volume * 100);
+
+  $("#mMusic").onchange = e => {
+    Audio_.prefs.music = e.target.checked; savePrefs(Audio_.prefs);
+    if (!Audio_.ready) return;
+    const t = Audio_.ctx.currentTime;
+    Audio_.musicGain.gain.cancelScheduledValues(t);
+    Audio_.musicGain.gain.linearRampToValueAtTime(e.target.checked ? 0.85 : 0.0001, t + 0.5);
+    if (e.target.checked) Audio_.startMusic();
+  };
+  $("#mSfx").onchange = e => {
+    Audio_.prefs.sfx = e.target.checked; savePrefs(Audio_.prefs);
+    if (Audio_.ready) Audio_.sfxGain.gain.value = e.target.checked ? 0.9 : 0.0001;
+  };
+  $("#mSimple").onchange = e => {
+    Audio_.prefs.simple = e.target.checked; savePrefs(Audio_.prefs);
+    if (!state) return;
+    state.simple = e.target.checked;
+    const t = page().type;
+    if (state.simple && (t === "poll" || t === "recall")) nextPage();
+    else renderPage(true);
+  };
+  $("#vol").oninput = e => {
+    Audio_.prefs.volume = e.target.value / 100; savePrefs(Audio_.prefs);
+    if (Audio_.ready) Audio_.master.gain.value = Audio_.prefs.volume;
+  };
+  $("#nbBtn").onclick = () => openDrawer(!$("#drawer").classList.contains("open"));
+  $("#expBtn").onclick = () => showExport();
+  $("#scrim").onclick = () => openDrawer(false);
+  $("#quitBtn").onclick = () => { renderShelf(); showScreen("shelf"); };
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { openDrawer(false); const m = document.querySelector(".modal"); if (m) m.remove(); } });
+}
+
+/* ---------- 强度表 ---------- */
+function meterLoop() {
+  const m = Audio_.mood();
+  $("#mBright").style.width = Math.round(m.brightness * 100) + "%";
+  $("#mTens").style.width = Math.round(m.tension * 100) + "%";
+  requestAnimationFrame(meterLoop);
+}
+
+/* ---------- 启动 ---------- */
+bindChrome();
+renderShelf();
+showScreen("shelf");
+meterLoop();
+window.__app = {
+  state: () => state,
+  chapter: () => (state ? chapter() : null),
+  page: () => (state ? page() : null),
+  audio: Audio_,
+  chapters: () => CHAPTERS,
+  artKeys: () => Object.keys(ART),
+  base: () => Audio_.base,
+  exportText: () => exportText(),
+  go: id => startChapter(id, null)
+};
+</script>
+</body>
+</html>
